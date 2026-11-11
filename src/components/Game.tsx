@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import RendererBoundary from './RendererBoundary';
 import PixiGame from './PixiGame.tsx';
 
 import { useElementSize } from 'usehooks-ts';
@@ -37,7 +38,7 @@ export default function Game() {
   const scrollViewRef = useRef<HTMLDivElement>(null);
 
   if (!worldId || !engineId || !game) {
-    return null;
+    return <p role="status">Connecting to the persistent world…</p>;
   }
   return (
     <>
@@ -47,7 +48,7 @@ export default function Game() {
         <div className="relative overflow-hidden bg-brown-900" ref={gameWrapperRef}>
           <div className="absolute inset-0">
             <div className="container">
-              <Stage width={width} height={height} options={{ backgroundColor: 0x7ab5ff }}>
+              <RendererBoundary fallback={<div role="status" className="p-6 text-white">The map renderer is unavailable in this browser. Select a citizen below to inspect their history.</div>}><Stage width={width} height={height} options={{ backgroundColor: 0x7ab5ff }}>
                 {/* Re-propagate context because contexts are not shared between renderers.
 https://github.com/michalochman/react-pixi-fiber/issues/145#issuecomment-531549215 */}
                 <ConvexProvider client={convex}>
@@ -61,7 +62,7 @@ https://github.com/michalochman/react-pixi-fiber/issues/145#issuecomment-5315492
                     setSelectedElement={setSelectedElement}
                   />
                 </ConvexProvider>
-              </Stage>
+              </Stage></RendererBoundary>
             </div>
           </div>
         </div>
@@ -70,6 +71,7 @@ https://github.com/michalochman/react-pixi-fiber/issues/145#issuecomment-5315492
           className="flex flex-col overflow-y-auto shrink-0 px-4 py-6 sm:px-6 lg:w-96 xl:pr-6 border-t-8 sm:border-t-0 sm:border-l-8 border-brown-900  bg-brown-800 text-brown-100"
           ref={scrollViewRef}
         >
+          <nav aria-label="Live citizens" className="flex flex-wrap gap-2 mb-4">{Array.from(game.playerDescriptions.values()).map(player => <button key={player.playerId} className="border p-2 rounded" onClick={() => setSelectedElement({kind: "player", id: player.playerId})}>{player.name}</button>)}</nav>
           <PlayerDetails
             worldId={worldId}
             engineId={engineId}

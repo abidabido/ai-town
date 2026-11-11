@@ -7,7 +7,8 @@ import { data as f6SpritesheetData } from './spritesheets/f6';
 import { data as f7SpritesheetData } from './spritesheets/f7';
 import { data as f8SpritesheetData } from './spritesheets/f8';
 
-export const Descriptions = [
+export { GenesisCitizens as Descriptions } from './genesis';
+export const LegacyDescriptions = [
   // {
   //   name: 'Alex',
   //   character: 'f5',
