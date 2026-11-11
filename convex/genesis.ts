@@ -1,0 +1,7 @@
+import { mutation, query } from './_generated/server';
+import { v } from 'convex/values';
+import { advanceState, initialState, type GenesisState } from '../data/genesisEngine';
+export const current=query({args:{},handler:async ctx=>{const doc=await ctx.db.query('genesisSessions').withIndex('key',q=>q.eq('key','genesis-v1')).unique();return doc?{id:doc._id,state:doc.state as GenesisState}:null;}});
+export const history=query({args:{citizen:v.optional(v.number())},handler:async(ctx,args)=>{const events=await ctx.db.query('genesisEvents').withIndex('tick').order('desc').take(1000);return events.filter(e=>args.citizen===undefined||e.actors.includes(args.citizen)).slice(0,100);}});
+export const begin=mutation({args:{},handler:async ctx=>{const existing=await ctx.db.query('genesisSessions').withIndex('key',q=>q.eq('key','genesis-v1')).unique();if(existing)return existing._id;return await ctx.db.insert('genesisSessions',{key:'genesis-v1',state:initialState()});}});
+export const advance=mutation({args:{expectedTick:v.number(),steps:v.number()},handler:async(ctx,args)=>{const doc=await ctx.db.query('genesisSessions').withIndex('key',q=>q.eq('key','genesis-v1')).unique();if(!doc)throw Error('Start Genesis first.');let state=doc.state as GenesisState;if(state.tick!==args.expectedTick)return;const steps=Math.max(1,Math.min(4,Math.floor(args.steps)));for(let i=0;i<steps;i++){const next=advanceState(state);state=next.state;await ctx.db.insert('genesisEvents',next.event);}await ctx.db.patch(doc._id,{state});}});

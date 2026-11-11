@@ -1,4 +1,5 @@
 import Game from './components/Game.tsx';
+import Genesis from './components/Genesis';
 
 import { ToastContainer } from 'react-toastify';
 import a16zImg from '../assets/a16z.png';
@@ -17,7 +18,8 @@ import FreezeButton from './components/FreezeButton.tsx';
 import { MAX_HUMAN_PLAYERS } from '../convex/constants.ts';
 import PoweredByConvex from './components/PoweredByConvex.tsx';
 
-export default function Home() {
+export default function App(){return new URLSearchParams(window.location.search).get('view')==='legacy'?<Home/>:<Genesis/>;}
+function Home() {
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-between font-body game-background">

@@ -6,6 +6,8 @@ import { conversationId, playerId } from './aiTown/ids';
 import { engineTables } from './engine/schema';
 
 export default defineSchema({
+  genesisSessions: defineTable({key: v.string(), state: v.any()}).index('key', ['key']),
+  genesisEvents: defineTable({tick: v.number(), kind: v.string(), actors: v.array(v.number()), text: v.string()}).index('tick', ['tick']),
   music: defineTable({
     storageId: v.string(),
     type: v.union(v.literal('background'), v.literal('player')),
