@@ -1,0 +1,7 @@
+node_modules
+.env.local
+.env*
+!.env.example
+dist/
+*.tsbuildinfo
+.genesis-runtime/

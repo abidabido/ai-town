@@ -29,6 +29,7 @@
     "hnswlib-node": "^1.4.2",
     "pixi-viewport": "^5.0.1",
     "pixi.js": "^7.2.4",
+    "pixi.js-legacy": "7.2.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-github-btn": "^1.4.0",
