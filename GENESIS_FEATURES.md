@@ -29,3 +29,8 @@ Statuses: NOT STARTED, IN PROGRESS, IMPLEMENTED, VERIFIED, BLOCKED.
 Implementation: data/genesisLife.ts, data/genesisProfiles.ts, convex/genesis.ts, src/components/GenesisWorld3D.tsx, CharacterStudio.tsx, GenesisPanels.tsx.
 
 Regression repair: both initial and existing-world upgrade paths now populate the same profiles, so repeated additive upgrades are idempotent. Isolated test harnesses now compile genesisProfiles.
+
+| Actual downloadable planner | VERIFIED | 156-page PDF and 9-page preview rendered; download hash verified in browser. Private artifact bundle retained. |
+| Product integrity pipeline | VERIFIED | All-file hashes, PDF open/render/bounds/links; negative missing/tampered tests pass. |
+| Product revision / work log / review gate | VERIFIED | Revision 1 displayed awaiting-owner-review with real tool-role logs; public publishing is not connected. |
+| General-purpose autonomous product generation | NOT STARTED | Current product is authored through development tools and validated by a product-specific pipeline. |

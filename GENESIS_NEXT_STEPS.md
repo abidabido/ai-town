@@ -13,3 +13,7 @@ Adult partnership rules and their read-only archive are implemented and tested i
 7. Mobile — IN PROGRESS. Test actual iOS Safari touch pan/pinch, citizen selection, forms, context loss and low graphics. Do not mark verified solely from responsive CSS.
 
 Always inspect git status, recent commits and these three checkpoint files. Preserve untracked user files. Run node scripts/verify-genesis.cjs, node scripts/verify-genesis-commands.cjs, node scripts/verify-genesis-life.cjs, node scripts/verify-genesis-backend.cjs, and npm run build after relevant changes. Keep commits small and update actual statuses. No paid provider or public publication without approval. Business work is deferred.
+
+
+## Latest product handoff
+User priority changed to products before profit. Preserve the village and existing bakery. First planner is complete and privately retained; never publish its assets to the public GitHub fork without approval. Restore the private Library ZIP if needed, then verify-only and recreate the runtime package. Extend the manifest-driven pipeline with product-specific validators for additional actual artifact kinds, a secure authoring job workflow and immutable versioned storage. Do not claim arbitrary product generation is available. Before any commercial publication: owner must review the artifact and draft listing; pricing/fees and legal/market requirements remain unverified. There is no publication action or payment connection. Family/child work remains as previously recorded and is not part of this product pass.
