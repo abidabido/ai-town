@@ -1,3 +1,17 @@
+# Next work — Observer Presence · November 12, 2026
+
+Branch genesis/observer-presence-20261112, verified code 7c05282. Read latest sections in all three files. Preserve 14 citizens, Sav's encounter, Vera/Theo research and product assets. Do not restart.
+
+1. Contextual visitor conversation — NOT STARTED. Files: data/genesisLife.ts, genesisMemory.ts, convex/genesis.ts, ObserverPresence.tsx. An eligible witness may choose to ask a bounded context-relevant question; persistent question/reply records, explicit player recipient and length validation, no identity leakage. Acceptance: actual witness asks, Abby reply is saved once, refresh retains both, unrelated citizens learn nothing, ordinary needs can defer asking. No external model needed.
+2. Street View usability/mobile — IN PROGRESS. GenesisWorld3D.tsx, Genesis3D.css, ObserverPresence.tsx. Add touch look controls/collision-aware walking and clear camera-mode indicators; fix SVG near-plane/overlapping labels without breaking WebGL. Current cardinal steps update saved position; building destination bounds reject interiors, but segment traversal is not full collision/pathfinding. Test physical iPad/iPhone Safari and narrow phone/tablet viewport; pinch, tap, onscreen keyboard and layout overflow. Acceptance: readable reachable controls, stable camera while walking, no false presence on camera-only motion.
+3. Presence provenance and retention — IN PROGRESS. data/genesisLife.ts, genesisMemory.ts, convex/genesis.ts. Paginate canonical encounter history, explicit evidence links from profile, bound attempted-ID state if population removal is introduced. Improve legacy pulse-position upgrade. Acceptance: old records remain inspectable after recent-state trimming and checkpoint/timeline isolation holds.
+4. Observer investigation — NOT STARTED. Extend existing inquiry schema only after witness knowledge/messaging exists. Actual prior observations, competing ordinary explanation, supported test, non-guaranteed conclusion. Do not infer Abby identity from Feeling events or automatically mark Convinced. Acceptance: observations/claims/interpretations stay distinct and conclusions link to genuine tests.
+5. Rumor/social propagation and reputation — NOT STARTED. Need legitimate recipients/knowledge sharing, non-omniscient memory and action histories. Gazette/Whisper Web are not implemented. Administrator-only archive is BLOCKED on real backend authorization. No autonomous code/tools/credentials access.
+
+Re-run all ten verify-genesis suites listed in progress plus npm run build for core changes; convex dev --once only for the existing configured deployment. Private preview requires awake Codespace, port 5173 remains private. No paid APIs/public deployment. Stage only intended code/docs; preserve pre-existing untracked README and failed bakery build artifacts. Last live creator identity has NOT been revealed; do not use a broadcast as an automated smoke test.
+
+---
+
 # Next work — Curiosity pilot · 2026-11-12
 
 Current branch genesis/curiosity-pilot-20261112; verified implementation 98593a3. Read latest sections in all three checkpoint files before older queues. Preserve saved Vera/Theo study and 13 citizens.

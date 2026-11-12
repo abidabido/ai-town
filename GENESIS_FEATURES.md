@@ -1,3 +1,28 @@
+# Current feature status — Observer Presence · November 12, 2026
+
+Latest verified code 7c05282; branch genesis/observer-presence-20261112. This section supersedes older Observer status.
+
+| Feature / acceptance | Status | Evidence and limits |
+|---|---|---|
+| Default The Feeling and saved preferences | VERIFIED | Unit fixture and live initial default; saved mode survived refresh |
+| Invisible suppression | VERIFIED | Zero detection in fixtures; live mode/history retention |
+| Local detection and different reactions | VERIFIED | Live nearby Sav; distant non-recipients; deterministic varied-trait/needs/weather fixtures |
+| Witness memories and evidence | VERIFIED | Actor-only source-linked diaries, canonical history, refresh and JSON/upgrade preservation |
+| Visitor avatar | VERIFIED (compatibility renderer) | Visible mesh/label in live Sky View; color/label controls; GPU device testing pending |
+| Creator revelation | VERIFIED (isolated backend) | One selected recipient, no forced belief; live village identity remains unrevealed |
+| Public announcement | VERIFIED (isolated backend) | Explicit confirmation, per-recipient noticeboard event; not chat/social network integration |
+| Street View and walking | VERIFIED (desktop compatibility browser) | Actual perspective camera, turn buttons, revision-checked saved cardinal movement; no free-look touch/continuous path collision |
+| Observer commands | VERIFIED (limited set) | Backend tests and live hide/Feeling commands; others honestly unsupported |
+| Encounter history | VERIFIED (recent history) | Saved encounter with witness perceptions; original records retained |
+| Secure Forbidden Archive | BLOCKED | Requires backend administrator access control; ordinary history is not a secure archive |
+| Mobile/touch layout | IMPLEMENTED | Large controls and wrapping layout; physical Safari and narrow viewport verification pending |
+| Citizen questions and Abby replies | NOT STARTED | No decorative messaging control added |
+| Rumors, Observer research, reputation, creator proof | NOT STARTED | Existing harvest research preserved, not repurposed into invented evidence |
+| Interiors, generational legends, debates | NOT STARTED | Requires further supported world systems |
+| Existing village systems | VERIFIED (regressions) | All ten suites pass; 14 live citizens and saved Vera/Theo study retained |
+
+---
+
 # Current feature status — Curiosity pilot · 2026-11-12
 
 Supersedes older research status below. Implementation 98593a3, branch genesis/curiosity-pilot-20261112.
