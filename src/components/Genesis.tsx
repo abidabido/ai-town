@@ -1,3 +1,4 @@
+import ObserverPresencePanel from "./ObserverPresence";
 import ResearchLibrary from "./ResearchLibrary";
 import { DailyTea, GenesisHelp } from "./GenesisFriendly";
 import { friendlyIntent } from "../../data/genesisFriendly";
@@ -475,6 +476,7 @@ export default function Genesis() {
                 ["Love & Families", "genesis-families"],
                 ["Town Talk", "genesis-talk"],
                 ["Research Library", "genesis-research"],
+                ["Observer Presence", "genesis-presence"],
                 ["What’s Happening", "genesis-news"],
                 ["The Observatory", "genesis-command-center"],
                 ["Village History", "genesis-history"],
@@ -893,6 +895,11 @@ export default function Genesis() {
                 Up to 100 updates from the latest 1,000 saved events.
               </small>
             </section>
+            <ObserverPresencePanel
+              state={state}
+              revision={current!.revision}
+              selected={selected}
+            />
             <ResearchLibrary state={state} />
             <GenesisHelp />
             <details className="panel">

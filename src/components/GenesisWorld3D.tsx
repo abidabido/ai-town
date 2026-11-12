@@ -1,58 +1,728 @@
-import {useEffect,useRef,useState,type ComponentProps} from 'react';
-import * as T from 'three';
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import {SVGRenderer} from 'three/examples/jsm/renderers/SVGRenderer.js';
-import type GenesisWorld from './GenesisWorld';
-import {factionColors} from './GenesisWorld';
-import {calendar,PLACES} from '../../data/genesisLife';
-import './Genesis3D.css';
-type Props=ComponentProps<typeof GenesisWorld>;
-export default function GenesisWorld3D(props:Props){
- const host=useRef<HTMLDivElement>(null),latest=useRef(props),api=useRef<{view:(mode:string)=>void;zoom:(amount:number)=>void}>();latest.current=props;
- const [quality,setQuality]=useState('balanced'),[mode,setMode]=useState('Starting 3D renderer…'),[follow,setFollow]=useState(false),[cinema,setCinema]=useState(false);
- const options=useRef({follow,cinema});options.current={follow,cinema};
- useEffect(()=>{
-  const root=host.current!;const scene=new T.Scene();scene.background=new T.Color('#a8c6cc');const camera=new T.OrthographicCamera(-72,72,48,-48,.1,500);camera.position.set(105,95,115);camera.lookAt(0,0,0);
-  let renderer:T.WebGLRenderer|SVGRenderer;let gpu=false;
-  try{renderer=new T.WebGLRenderer({antialias:quality!=='low',powerPreference:'low-power'});gpu=true;renderer.setPixelRatio(Math.min(devicePixelRatio,quality==='high'?2:1.25));renderer.shadowMap.enabled=quality==='high';renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;setMode('WebGL · actual 3D geometry');}catch{renderer=new SVGRenderer();renderer.setQuality('low');setMode('Compatibility 3D · projected mesh geometry');}
-  const el=renderer.domElement;root.appendChild(el);el.setAttribute('aria-label','Interactive 3D village');el.setAttribute('role','img');
-  const controls=new OrbitControls(camera,root);controls.enableDamping=gpu;controls.dampingFactor=.12;controls.minZoom=.55;controls.maxZoom=5;controls.maxPolarAngle=Math.PI*.48;controls.minPolarAngle=.08;controls.target.set(0,0,0);controls.touches.ONE=T.TOUCH.ROTATE;controls.touches.TWO=T.TOUCH.DOLLY_PAN;controls.update();
-  const ambient=new T.HemisphereLight('#fff4d8','#6f7b67',2.3);scene.add(ambient);const sun=new T.DirectionalLight('#ffdda3',2.8);sun.position.set(-35,70,28);sun.castShadow=gpu&&quality==='high';sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;scene.add(sun);
-  const mats=new Map<string,T.MeshLambertMaterial>();const material=(color:string)=>{if(!mats.has(color))mats.set(color,new T.MeshLambertMaterial({color}));return mats.get(color)!;};
-  const mesh=(parent:T.Object3D,geo:T.BufferGeometry,color:string,x:number,y:number,z:number)=>{const m=new T.Mesh(geo,material(color));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;};
-  const box=(p:T.Object3D,w:number,h:number,d:number,c:string,x:number,y:number,z:number)=>mesh(p,new T.BoxGeometry(w,h,d),c,x,y,z);
-  const terrain=box(scene,122,3,113,'#748765',0,-1.6,0);terrain.userData.ground=true;
-  for(let i=0;i<7;i++){const h=mesh(scene,new T.SphereGeometry(1,10,5),'#7f906d',-57+i*18,-1,-50);h.scale.set(15,3+(i%3)*2,10);}
-  box(scene,106,.12,5,'#bcb39d',0,.03,0);box(scene,5,.12,91,'#bcb39d',-30,.04,-1);box(scene,5,.12,85,'#bcb39d',29,.04,0);box(scene,67,.12,4,'#c4bba4',0,.05,-28);box(scene,92,.12,4,'#c4bba4',0,.05,35);
-  box(scene,121,.18,8,'#6aabb5',0,.08,22);box(scene,9,.65,12,'#b49976',-30,.45,22);box(scene,9,.65,12,'#b49976',29,.45,22);
-  for(let i=0;i<(quality==='low'?16:32);i++){const a=i*2.399,x=Math.cos(a)*(43+i%5*3),z=Math.sin(a)*(37+i%4*4);if(Math.abs(z-22)<8)continue;const tree=new T.Group();tree.position.set(x,0,z);scene.add(tree);mesh(tree,new T.CylinderGeometry(.4,.6,4,5),'#78624c',0,2,0);mesh(tree,new T.ConeGeometry(2.6,7,6),i%3?'#436e55':'#658055',0,6.2,0);}
-  for(let i=0;i<8;i++){box(scene,12,.2,.5,'#5c5940',-34,.2,-37+i*1.4);for(let j=0;j<4;j++)mesh(scene,new T.ConeGeometry(.45,1,4),'#80a25c',-39+j*3,.7,-37+i*1.4);}
-  const lamps:T.Mesh[]=[];for(const x of [-29,29])for(const z of [-17,12,34]){box(scene,.25,4,.25,'#4e5350',x,2,z);lamps.push(mesh(scene,new T.SphereGeometry(.6,6,4),'#ffe8a6',x,4.1,z));}
-  type Item={group:T.Group,label:HTMLButtonElement,target:T.Vector3,limbs?:T.Group[],body?:T.Mesh,head?:T.Mesh,hair?:T.Mesh,last?:string,movingUntil?:number};const people=new Map<number,Item>(),buildings=new Map<string,Item>();
-  const labels=document.createElement('div');labels.className='world3d-labels';root.appendChild(labels);
-  const label=(text:string,click:()=>void)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=click;labels.appendChild(b);return b;};
-  const world=(x:number,y:number)=>new T.Vector3(x-50,0,y-50);
-  const addBuilding=(b:{id:string;type:string;x:number;y:number;progress?:number})=>{const g=new T.Group();g.position.copy(world(b.x,b.y));g.userData.building=b.id;scene.add(g);const h=b.type.toLowerCase(),c=h==='hospital'?'#dfddd2':h==='laboratory'?'#c4cecb':h==='market'?'#cfbda6':'#d5c7ab';box(g,7,5.3,6,c,0,2.65,0);const roof=mesh(g,new T.ConeGeometry(6.1,3.4,4),'#816e64',0,6.9,0);roof.rotation.y=Math.PI/4;box(g,1.4,2.7,.18,'#665a49',0,1.35,3.1);for(const xx of [-2.3,2.3]){box(g,1.3,1.5,.2,'#d9e4cd',xx,3.15,3.1);box(g,.18,1.5,.25,'#b2a082',xx,3.15,3.2);}box(g,1,3,1,'#9e9080',2.2,6.8,-1);
-   if(h==='hospital'||h==='clinic'){box(g,.65,2.4,.3,'#af514a',0,4.1,3.3);box(g,2.4,.65,.3,'#af514a',0,4.1,3.3);}if(h==='observatory'||h==='laboratory'){mesh(g,new T.SphereGeometry(3,10,6),'#829699',0,7,0);}
-   const item:Item={group:g,label:label(b.type,()=>{const actual=latest.current.state.life.buildings.find(x=>x.id===b.id)??b;latest.current.onBuilding(actual);}),target:g.position.clone()};buildings.set(b.id,item);};
-  const civic=Object.entries(PLACES).filter(([k])=>k!=='homes').map(([type,p])=>({id:'civic-'+type,type,...p}));civic.forEach(addBuilding);
-  const addPerson=(c:Props['state']['citizens'][number])=>{const p=latest.current.state.life.people[c.id];const g=new T.Group();g.position.copy(world(c.x,c.y));g.userData.citizen=c.id;scene.add(g);const torso=mesh(g,new T.CylinderGeometry(.45,.58,1.25,7),p.profile?.outfit??factionColors[c.faction]??'#b6b5a0',0,1.45,0);const head=mesh(g,new T.SphereGeometry(.37,8,6),p.profile?.skin??'#c9a783',0,2.45,0);const hair=mesh(g,new T.SphereGeometry(.39,8,5),p.profile?.hair??'#493c33',0,2.6,-.04);hair.scale.y=.6;torso.material=(torso.material as T.MeshLambertMaterial).clone();head.material=(head.material as T.MeshLambertMaterial).clone();hair.material=(hair.material as T.MeshLambertMaterial).clone();const limbs:T.Group[]=[];for(let i=0;i<4;i++){const pivot=new T.Group();pivot.position.set(i<2?(i? .25:-.25):(i===2?-.63:.63),i<2?.92:1.9,0);g.add(pivot);mesh(pivot,new T.CylinderGeometry(.12,.15,i<2?.9:.85,5),i<2?'#475359':p.profile?.outfit??factionColors[c.faction]??'#bbb',0,-.4,0);limbs.push(pivot);}people.set(c.id,{group:g,limbs,body:torso,head,hair,target:g.position.clone(),label:label(c.name,()=>latest.current.onCitizen(c.id))});};
-  const ghost=new T.Group();box(ghost,7,5.3,6,'#a7bd86',0,2.7,0);ghost.visible=false;scene.add(ghost);
-  const ray=new T.Raycaster(),pointer=new T.Vector2();let down={x:0,y:0};const aim=(e:PointerEvent)=>{const r=el.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);};
-  const pick=(e:PointerEvent)=>{if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;aim(e);if(latest.current.placement){const v=ray.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),0),new T.Vector3());if(v)latest.current.onPlace(Math.round(v.x+50),Math.round(v.z+50));return;}for(const hit of ray.intersectObjects(scene.children,true)){let o:T.Object3D|null=hit.object;while(o){if(o.userData.citizen!==undefined){latest.current.onCitizen(o.userData.citizen);return;}if(o.userData.building){const b=latest.current.state.life.buildings.find(b=>b.id===o!.userData.building)??civic.find(b=>b.id===o!.userData.building);if(b)latest.current.onBuilding(b);return;}o=o.parent;}}};
-  const start=(e:PointerEvent)=>{down={x:e.clientX,y:e.clientY};};const hover=(e:PointerEvent)=>{if(!latest.current.placement)return;aim(e);const v=ray.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),0),new T.Vector3());if(v){ghost.position.set(Math.round(v.x),0,Math.round(v.z));}};el.addEventListener('pointerdown',start as EventListener);el.addEventListener('pointerup',pick as EventListener);el.addEventListener('pointermove',hover as EventListener);
-  api.current={view:(v)=>{if(v==='rotate'){camera.position.sub(controls.target).applyAxisAngle(new T.Vector3(0,1,0),Math.PI/4).add(controls.target);}else{controls.target.set(0,0,0);camera.position.set(v==='overhead'?0:105,v==='overhead'?150:95,v==='overhead'?.1:115);camera.zoom=1;camera.updateProjectionMatrix();}controls.update();},zoom:(n)=>{camera.zoom=T.MathUtils.clamp(camera.zoom*n,.55,5);camera.updateProjectionMatrix();}};
-  const resize=()=>{const w=root.clientWidth,h=root.clientHeight;camera.left=-55*w/h;camera.right=55*w/h;camera.top=55;camera.bottom=-55;camera.updateProjectionMatrix();renderer.setSize(w,h);};const observer=new ResizeObserver(resize);observer.observe(root);resize();let frame=0,last=0,stopped=false;
-  const animate=(now:number)=>{if(stopped)return;frame=requestAnimationFrame(animate);if(document.hidden||now-last<(gpu?(quality==='low'?50:33):90))return;last=now;const {state,selected,playing,placement}=latest.current;ghost.visible=!!placement;
-   state.life.buildings.forEach(b=>{if(!buildings.has(b.id))addBuilding(b);const it=buildings.get(b.id)!;it.group.scale.y=Math.max(.18,b.progress/100);it.label.textContent=b.type+(b.progress<100?' '+b.progress+'%':'');});for(const [id,it] of buildings){if(!id.startsWith('civic-')&&!state.life.buildings.some(b=>b.id===id)){scene.remove(it.group);it.label.remove();buildings.delete(id);}}
-   for(const c of state.citizens){if(!people.has(c.id))addPerson(c);const it=people.get(c.id)!,p=state.life.people[c.id];const target=world(c.x,c.y);if(it.target.distanceTo(target)>.01){it.target.copy(target);it.movingUntil=now+2300;}const moving=it.group.position.distanceTo(it.target)>.07;if(moving){it.group.lookAt(it.target.x,0,it.target.z);it.group.position.lerp(it.target,.12);}const sleeping=/rest|sleep/i.test(p.activity);it.group.rotation.z=sleeping?Math.PI/2:0;it.group.position.y=sleeping?.35:0;it.limbs!.forEach((limb,i)=>limb.rotation.x=moving?Math.sin(now*.011+i*Math.PI)*.7:playing&&/talk/i.test(p.activity)&&i>1?Math.sin(now*.004+i)*.25:playing&&/work|farm/i.test(p.activity)&&i>1?-.6+Math.sin(now*.005)*.3:0);
-   (it.body!.material as T.MeshLambertMaterial).color.set(p.profile?.outfit??factionColors[c.faction]??'#b6b5a0');(it.head!.material as T.MeshLambertMaterial).color.set(p.profile?.skin??'#c9a783');(it.hair!.material as T.MeshLambertMaterial).color.set(p.profile?.hair??'#493c33');it.label.textContent=c.name;it.label.classList.toggle('chosen',selected===c.id);it.label.title=p.activity;
-  }for(const [id,it] of people)if(!state.citizens.some(c=>c.id===id)){scene.remove(it.group);it.label.remove();people.delete(id);}
-   if(options.current.follow&&selected!==undefined&&people.has(selected)){const p=people.get(selected)!.group.position,delta=p.clone().sub(controls.target).multiplyScalar(.08);controls.target.add(delta);camera.position.add(delta);}controls.autoRotate=options.current.cinema;controls.autoRotateSpeed=.45;controls.update();const night=calendar(state.tick).hour===0;ambient.intensity=night?.65:2.3;sun.intensity=night?.3:2.8;scene.background=new T.Color(night?'#28384c':state.life.weather==='Rain'?'#abbac0':'#b9d1d2');lamps.forEach(m=>(m.material as T.MeshLambertMaterial).color.set(night?'#ffe292':'#c9c2a6'));
-   for(const it of [...buildings.values(),...people.values()]){const pos=it.group.position.clone().add(new T.Vector3(0,it.limbs?4:10,0)).project(camera);it.label.style.transform='translate(-50%,-50%) translate('+((pos.x+1)*root.clientWidth/2)+'px,'+((-pos.y+1)*root.clientHeight/2)+'px)';it.label.hidden=pos.z<-1||pos.z>1||Math.abs(pos.x)>1.2||Math.abs(pos.y)>1.2;}
-   renderer.render(scene,camera);
-  };frame=requestAnimationFrame(animate);
-  return()=>{stopped=true;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();el.removeEventListener('pointerdown',start as EventListener);el.removeEventListener('pointerup',pick as EventListener);el.removeEventListener('pointermove',hover as EventListener);scene.traverse(o=>{if(o instanceof T.Mesh){o.geometry.dispose();if(!Array.isArray(o.material))o.material.dispose();}});mats.forEach(m=>m.dispose());if(renderer instanceof T.WebGLRenderer)renderer.dispose();el.remove();labels.remove();api.current=undefined;};
- },[quality]);
- return <section className="panel world3d" id="genesis-village"><header><div><span className="eyebrow">Weather · {props.state.life.weather}</span><h2>My Village</h2></div><select aria-label="3D graphics quality" value={quality} onChange={e=>setQuality(e.target.value)}><option value="low">Low graphics</option><option value="balanced">Balanced graphics</option><option value="high">High graphics</option></select></header><div className="world3d-tools"><button onClick={()=>api.current?.view('iso')}>Angled view</button><button onClick={()=>api.current?.view('overhead')}>From above</button><button onClick={()=>api.current?.view('rotate')}>Rotate</button><button aria-label="Zoom in" onClick={()=>api.current?.zoom(1.25)}>+</button><button aria-label="Zoom out" onClick={()=>api.current?.zoom(.8)}>−</button><button disabled={props.selected===undefined} aria-pressed={follow} onClick={()=>setFollow(!follow)}>Follow villager</button><button aria-pressed={cinema} onClick={()=>setCinema(!cinema)}>Slow camera tour</button></div><div ref={host} className="world3d-stage"/><p className="world3d-help">Drag to look around. Pinch to zoom, or use two fingers to move across the village. Tap a villager or building to learn more. {props.placement?'Tap a spot to review the building cost.':''}</p><details><summary>Graphics details</summary><p>{mode}. Movement follows saved village activities. Detailed animations inside buildings are still on the way.</p></details></section>;
+import { useEffect, useRef, useState, type ComponentProps } from "react";
+import * as T from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js";
+import type GenesisWorld from "./GenesisWorld";
+import { factionColors } from "./GenesisWorld";
+import { calendar, PLACES, observerPresence } from "../../data/genesisLife";
+import "./Genesis3D.css";
+type Props = ComponentProps<typeof GenesisWorld>;
+export default function GenesisWorld3D(props: Props) {
+  const host = useRef<HTMLDivElement>(null),
+    latest = useRef(props),
+    api = useRef<{
+      view: (mode: string) => void;
+      zoom: (amount: number) => void;
+    }>();
+  latest.current = props;
+  const [quality, setQuality] = useState("balanced"),
+    [mode, setMode] = useState("Starting 3D renderer…"),
+    [follow, setFollow] = useState(false),
+    [cinema, setCinema] = useState(false);
+  const options = useRef({ follow, cinema });
+  options.current = { follow, cinema };
+  useEffect(() => {
+    const root = host.current!;
+    const scene = new T.Scene();
+    scene.background = new T.Color("#a8c6cc");
+    const skyCamera = new T.OrthographicCamera(-72, 72, 48, -48, 0.1, 500);
+    let camera: T.OrthographicCamera | T.PerspectiveCamera = skyCamera,
+      street = false;
+    camera.position.set(105, 95, 115);
+    camera.lookAt(0, 0, 0);
+    let renderer: T.WebGLRenderer | SVGRenderer;
+    let gpu = false;
+    try {
+      renderer = new T.WebGLRenderer({
+        antialias: quality !== "low",
+        powerPreference: "low-power",
+      });
+      gpu = true;
+      renderer.setPixelRatio(
+        Math.min(devicePixelRatio, quality === "high" ? 2 : 1.25),
+      );
+      renderer.shadowMap.enabled = quality === "high";
+      renderer.shadowMap.type = T.PCFSoftShadowMap;
+      renderer.outputColorSpace = T.SRGBColorSpace;
+      setMode("WebGL · actual 3D geometry");
+    } catch {
+      renderer = new SVGRenderer();
+      renderer.setQuality("low");
+      setMode("Compatibility 3D · projected mesh geometry");
+    }
+    const el = renderer.domElement;
+    root.appendChild(el);
+    el.setAttribute("aria-label", "Interactive 3D village");
+    el.setAttribute("role", "img");
+    const controls = new OrbitControls(camera, root);
+    controls.enableDamping = gpu;
+    controls.dampingFactor = 0.12;
+    controls.minZoom = 0.55;
+    controls.maxZoom = 5;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.minPolarAngle = 0.08;
+    controls.target.set(0, 0, 0);
+    controls.touches.ONE = T.TOUCH.ROTATE;
+    controls.touches.TWO = T.TOUCH.DOLLY_PAN;
+    controls.update();
+    const ambient = new T.HemisphereLight("#fff4d8", "#6f7b67", 2.3);
+    scene.add(ambient);
+    const sun = new T.DirectionalLight("#ffdda3", 2.8);
+    sun.position.set(-35, 70, 28);
+    sun.castShadow = gpu && quality === "high";
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.left = -65;
+    sun.shadow.camera.right = 65;
+    sun.shadow.camera.top = 65;
+    sun.shadow.camera.bottom = -65;
+    scene.add(sun);
+    const mats = new Map<string, T.MeshLambertMaterial>();
+    const material = (color: string) => {
+      if (!mats.has(color))
+        mats.set(color, new T.MeshLambertMaterial({ color }));
+      return mats.get(color)!;
+    };
+    const mesh = (
+      parent: T.Object3D,
+      geo: T.BufferGeometry,
+      color: string,
+      x: number,
+      y: number,
+      z: number,
+    ) => {
+      const m = new T.Mesh(geo, material(color));
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      parent.add(m);
+      return m;
+    };
+    const box = (
+      p: T.Object3D,
+      w: number,
+      h: number,
+      d: number,
+      c: string,
+      x: number,
+      y: number,
+      z: number,
+    ) => mesh(p, new T.BoxGeometry(w, h, d), c, x, y, z);
+    const terrain = box(scene, 122, 3, 113, "#748765", 0, -1.6, 0);
+    terrain.userData.ground = true;
+    for (let i = 0; i < 7; i++) {
+      const h = mesh(
+        scene,
+        new T.SphereGeometry(1, 10, 5),
+        "#7f906d",
+        -57 + i * 18,
+        -1,
+        -50,
+      );
+      h.scale.set(15, 3 + (i % 3) * 2, 10);
+    }
+    box(scene, 106, 0.12, 5, "#bcb39d", 0, 0.03, 0);
+    box(scene, 5, 0.12, 91, "#bcb39d", -30, 0.04, -1);
+    box(scene, 5, 0.12, 85, "#bcb39d", 29, 0.04, 0);
+    box(scene, 67, 0.12, 4, "#c4bba4", 0, 0.05, -28);
+    box(scene, 92, 0.12, 4, "#c4bba4", 0, 0.05, 35);
+    box(scene, 121, 0.18, 8, "#6aabb5", 0, 0.08, 22);
+    box(scene, 9, 0.65, 12, "#b49976", -30, 0.45, 22);
+    box(scene, 9, 0.65, 12, "#b49976", 29, 0.45, 22);
+    for (let i = 0; i < (quality === "low" ? 16 : 32); i++) {
+      const a = i * 2.399,
+        x = Math.cos(a) * (43 + (i % 5) * 3),
+        z = Math.sin(a) * (37 + (i % 4) * 4);
+      if (Math.abs(z - 22) < 8) continue;
+      const tree = new T.Group();
+      tree.position.set(x, 0, z);
+      scene.add(tree);
+      mesh(tree, new T.CylinderGeometry(0.4, 0.6, 4, 5), "#78624c", 0, 2, 0);
+      mesh(
+        tree,
+        new T.ConeGeometry(2.6, 7, 6),
+        i % 3 ? "#436e55" : "#658055",
+        0,
+        6.2,
+        0,
+      );
+    }
+    for (let i = 0; i < 8; i++) {
+      box(scene, 12, 0.2, 0.5, "#5c5940", -34, 0.2, -37 + i * 1.4);
+      for (let j = 0; j < 4; j++)
+        mesh(
+          scene,
+          new T.ConeGeometry(0.45, 1, 4),
+          "#80a25c",
+          -39 + j * 3,
+          0.7,
+          -37 + i * 1.4,
+        );
+    }
+    const lamps: T.Mesh[] = [];
+    for (const x of [-29, 29])
+      for (const z of [-17, 12, 34]) {
+        box(scene, 0.25, 4, 0.25, "#4e5350", x, 2, z);
+        lamps.push(
+          mesh(scene, new T.SphereGeometry(0.6, 6, 4), "#ffe8a6", x, 4.1, z),
+        );
+      }
+    type Item = {
+      group: T.Group;
+      label: HTMLButtonElement;
+      target: T.Vector3;
+      limbs?: T.Group[];
+      body?: T.Mesh;
+      head?: T.Mesh;
+      hair?: T.Mesh;
+      last?: string;
+      movingUntil?: number;
+    };
+    const people = new Map<number, Item>(),
+      buildings = new Map<string, Item>();
+    const labels = document.createElement("div");
+    labels.className = "world3d-labels";
+    root.appendChild(labels);
+    const label = (text: string, click: () => void) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = text;
+      b.onclick = click;
+      labels.appendChild(b);
+      return b;
+    };
+    const world = (x: number, y: number) => new T.Vector3(x - 50, 0, y - 50);
+
+    const observerAvatar = new T.Group();
+    scene.add(observerAvatar);
+    const observerBody = mesh(
+      observerAvatar,
+      new T.CylinderGeometry(0.48, 0.62, 1.35, 8),
+      "#ae9fdd",
+      0,
+      1.4,
+      0,
+    );
+    mesh(
+      observerAvatar,
+      new T.SphereGeometry(0.38, 10, 7),
+      "#d9b79b",
+      0,
+      2.5,
+      0,
+    );
+    mesh(observerAvatar, new T.ConeGeometry(0.62, 0.7, 8), "#544365", 0, 3, 0);
+    const observerLabel = label("The Visitor", () =>
+      document
+        .getElementById("genesis-presence")
+        ?.scrollIntoView({ behavior: "smooth" }),
+    );
+    const addBuilding = (b: {
+      id: string;
+      type: string;
+      x: number;
+      y: number;
+      progress?: number;
+    }) => {
+      const g = new T.Group();
+      g.position.copy(world(b.x, b.y));
+      g.userData.building = b.id;
+      scene.add(g);
+      const h = b.type.toLowerCase(),
+        c =
+          h === "hospital"
+            ? "#dfddd2"
+            : h === "laboratory"
+              ? "#c4cecb"
+              : h === "market"
+                ? "#cfbda6"
+                : "#d5c7ab";
+      box(g, 7, 5.3, 6, c, 0, 2.65, 0);
+      const roof = mesh(
+        g,
+        new T.ConeGeometry(6.1, 3.4, 4),
+        "#816e64",
+        0,
+        6.9,
+        0,
+      );
+      roof.rotation.y = Math.PI / 4;
+      box(g, 1.4, 2.7, 0.18, "#665a49", 0, 1.35, 3.1);
+      for (const xx of [-2.3, 2.3]) {
+        box(g, 1.3, 1.5, 0.2, "#d9e4cd", xx, 3.15, 3.1);
+        box(g, 0.18, 1.5, 0.25, "#b2a082", xx, 3.15, 3.2);
+      }
+      box(g, 1, 3, 1, "#9e9080", 2.2, 6.8, -1);
+      if (h === "hospital" || h === "clinic") {
+        box(g, 0.65, 2.4, 0.3, "#af514a", 0, 4.1, 3.3);
+        box(g, 2.4, 0.65, 0.3, "#af514a", 0, 4.1, 3.3);
+      }
+      if (h === "observatory" || h === "laboratory") {
+        mesh(g, new T.SphereGeometry(3, 10, 6), "#829699", 0, 7, 0);
+      }
+      const item: Item = {
+        group: g,
+        label: label(b.type, () => {
+          const actual =
+            latest.current.state.life.buildings.find((x) => x.id === b.id) ?? b;
+          latest.current.onBuilding(actual);
+        }),
+        target: g.position.clone(),
+      };
+      buildings.set(b.id, item);
+    };
+    const civic = Object.entries(PLACES)
+      .filter(([k]) => k !== "homes")
+      .map(([type, p]) => ({ id: "civic-" + type, type, ...p }));
+    civic.forEach(addBuilding);
+    const addPerson = (c: Props["state"]["citizens"][number]) => {
+      const p = latest.current.state.life.people[c.id];
+      const g = new T.Group();
+      g.position.copy(world(c.x, c.y));
+      g.userData.citizen = c.id;
+      scene.add(g);
+      const torso = mesh(
+        g,
+        new T.CylinderGeometry(0.45, 0.58, 1.25, 7),
+        p.profile?.outfit ?? factionColors[c.faction] ?? "#b6b5a0",
+        0,
+        1.45,
+        0,
+      );
+      const head = mesh(
+        g,
+        new T.SphereGeometry(0.37, 8, 6),
+        p.profile?.skin ?? "#c9a783",
+        0,
+        2.45,
+        0,
+      );
+      const hair = mesh(
+        g,
+        new T.SphereGeometry(0.39, 8, 5),
+        p.profile?.hair ?? "#493c33",
+        0,
+        2.6,
+        -0.04,
+      );
+      hair.scale.y = 0.6;
+      torso.material = (torso.material as T.MeshLambertMaterial).clone();
+      head.material = (head.material as T.MeshLambertMaterial).clone();
+      hair.material = (hair.material as T.MeshLambertMaterial).clone();
+      const limbs: T.Group[] = [];
+      for (let i = 0; i < 4; i++) {
+        const pivot = new T.Group();
+        pivot.position.set(
+          i < 2 ? (i ? 0.25 : -0.25) : i === 2 ? -0.63 : 0.63,
+          i < 2 ? 0.92 : 1.9,
+          0,
+        );
+        g.add(pivot);
+        mesh(
+          pivot,
+          new T.CylinderGeometry(0.12, 0.15, i < 2 ? 0.9 : 0.85, 5),
+          i < 2
+            ? "#475359"
+            : (p.profile?.outfit ?? factionColors[c.faction] ?? "#bbb"),
+          0,
+          -0.4,
+          0,
+        );
+        limbs.push(pivot);
+      }
+      people.set(c.id, {
+        group: g,
+        limbs,
+        body: torso,
+        head,
+        hair,
+        target: g.position.clone(),
+        label: label(c.name, () => latest.current.onCitizen(c.id)),
+      });
+    };
+    const ghost = new T.Group();
+    box(ghost, 7, 5.3, 6, "#a7bd86", 0, 2.7, 0);
+    ghost.visible = false;
+    scene.add(ghost);
+    const ray = new T.Raycaster(),
+      pointer = new T.Vector2();
+    let down = { x: 0, y: 0 };
+    const aim = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      pointer.set(
+        ((e.clientX - r.left) / r.width) * 2 - 1,
+        (-(e.clientY - r.top) / r.height) * 2 + 1,
+      );
+      ray.setFromCamera(pointer, camera);
+    };
+    const pick = (e: PointerEvent) => {
+      if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 7) return;
+      aim(e);
+      if (latest.current.placement) {
+        const v = ray.ray.intersectPlane(
+          new T.Plane(new T.Vector3(0, 1, 0), 0),
+          new T.Vector3(),
+        );
+        if (v)
+          latest.current.onPlace(Math.round(v.x + 50), Math.round(v.z + 50));
+        return;
+      }
+      for (const hit of ray.intersectObjects(scene.children, true)) {
+        let o: T.Object3D | null = hit.object;
+        while (o) {
+          if (o.userData.citizen !== undefined) {
+            latest.current.onCitizen(o.userData.citizen);
+            return;
+          }
+          if (o.userData.building) {
+            const b =
+              latest.current.state.life.buildings.find(
+                (b) => b.id === o!.userData.building,
+              ) ?? civic.find((b) => b.id === o!.userData.building);
+            if (b) latest.current.onBuilding(b);
+            return;
+          }
+          o = o.parent;
+        }
+      }
+    };
+    const start = (e: PointerEvent) => {
+      down = { x: e.clientX, y: e.clientY };
+    };
+    const hover = (e: PointerEvent) => {
+      if (!latest.current.placement) return;
+      aim(e);
+      const v = ray.ray.intersectPlane(
+        new T.Plane(new T.Vector3(0, 1, 0), 0),
+        new T.Vector3(),
+      );
+      if (v) {
+        ghost.position.set(Math.round(v.x), 0, Math.round(v.z));
+      }
+    };
+    el.addEventListener("pointerdown", start as EventListener);
+    el.addEventListener("pointerup", pick as EventListener);
+    el.addEventListener("pointermove", hover as EventListener);
+    api.current = {
+      view: (v) => {
+        if (v === "street") {
+          const o = observerPresence(latest.current.state);
+          street = true;
+          camera = new T.PerspectiveCamera(
+            65,
+            root.clientWidth / root.clientHeight,
+            0.1,
+            500,
+          );
+          camera.position.copy(world(o.x, o.y)).add(new T.Vector3(0, 1.8, 0));
+          controls.object = camera;
+          controls.target.copy(camera.position).add(new T.Vector3(0, 0, -8));
+          controls.enablePan = false;
+          controls.enableRotate = false;
+          controls.autoRotate = false;
+          controls.update();
+          return;
+        }
+        if (v === "look-left" || v === "look-right") {
+          if (street) {
+            const direction = controls.target
+              .clone()
+              .sub(camera.position)
+              .applyAxisAngle(
+                new T.Vector3(0, 1, 0),
+                v === "look-left" ? 0.3 : -0.3,
+              );
+            controls.target.copy(camera.position).add(direction);
+            controls.update();
+          }
+          return;
+        }
+        if (street) {
+          street = false;
+          camera = skyCamera;
+          controls.object = camera;
+          controls.enablePan = true;
+          controls.enableRotate = true;
+        }
+        if (v === "rotate") {
+          camera.position
+            .sub(controls.target)
+            .applyAxisAngle(new T.Vector3(0, 1, 0), Math.PI / 4)
+            .add(controls.target);
+        } else {
+          controls.target.set(0, 0, 0);
+          camera.position.set(
+            v === "overhead" ? 0 : 105,
+            v === "overhead" ? 150 : 95,
+            v === "overhead" ? 0.1 : 115,
+          );
+          camera.zoom = 1;
+          camera.updateProjectionMatrix();
+        }
+        controls.update();
+      },
+      zoom: (n) => {
+        camera.zoom = T.MathUtils.clamp(camera.zoom * n, 0.55, 5);
+        camera.updateProjectionMatrix();
+      },
+    };
+    const resize = () => {
+      const w = root.clientWidth,
+        h = root.clientHeight;
+      if (camera instanceof T.OrthographicCamera) {
+        camera.left = (-55 * w) / h;
+        camera.right = (55 * w) / h;
+        camera.top = 55;
+        camera.bottom = -55;
+      } else {
+        camera.aspect = w / h;
+      }
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(root);
+    resize();
+    let frame = 0,
+      last = 0,
+      stopped = false;
+    const animate = (now: number) => {
+      if (stopped) return;
+      frame = requestAnimationFrame(animate);
+      if (
+        document.hidden ||
+        now - last < (gpu ? (quality === "low" ? 50 : 33) : 90)
+      )
+        return;
+      last = now;
+      const { state, selected, playing, placement } = latest.current;
+      ghost.visible = !!placement;
+      const observerState = observerPresence(state);
+      observerAvatar.position.copy(world(observerState.x, observerState.y));
+      observerAvatar.visible =
+        observerState.active &&
+        ["The Visitor", "The Creator"].includes(observerState.mode) &&
+        !street;
+      (observerBody.material as T.MeshLambertMaterial).color.set(
+        observerState.color,
+      );
+      observerLabel.textContent = observerState.label;
+      observerLabel.hidden = !observerAvatar.visible || !observerState.label;
+      const observerPoint = observerAvatar.position
+        .clone()
+        .add(new T.Vector3(0, 4, 0))
+        .project(camera);
+      observerLabel.style.transform =
+        "translate(-50%,-50%) translate(" +
+        ((observerPoint.x + 1) * root.clientWidth) / 2 +
+        "px," +
+        ((-observerPoint.y + 1) * root.clientHeight) / 2 +
+        "px)";
+      if (street) {
+        const desired = world(observerState.x, observerState.y);
+        const delta = new T.Vector3(
+          desired.x - camera.position.x,
+          1.8 - camera.position.y,
+          desired.z - camera.position.z,
+        );
+        camera.position.add(delta);
+        controls.target.add(delta);
+      }
+
+      state.life.buildings.forEach((b) => {
+        if (!buildings.has(b.id)) addBuilding(b);
+        const it = buildings.get(b.id)!;
+        it.group.scale.y = Math.max(0.18, b.progress / 100);
+        it.label.textContent =
+          b.type + (b.progress < 100 ? " " + b.progress + "%" : "");
+      });
+      for (const [id, it] of buildings) {
+        if (
+          !id.startsWith("civic-") &&
+          !state.life.buildings.some((b) => b.id === id)
+        ) {
+          scene.remove(it.group);
+          it.label.remove();
+          buildings.delete(id);
+        }
+      }
+      for (const c of state.citizens) {
+        if (!people.has(c.id)) addPerson(c);
+        const it = people.get(c.id)!,
+          p = state.life.people[c.id];
+        const target = world(c.x, c.y);
+        if (it.target.distanceTo(target) > 0.01) {
+          it.target.copy(target);
+          it.movingUntil = now + 2300;
+        }
+        const moving = it.group.position.distanceTo(it.target) > 0.07;
+        if (moving) {
+          it.group.lookAt(it.target.x, 0, it.target.z);
+          it.group.position.lerp(it.target, 0.12);
+        }
+        const sleeping = /rest|sleep/i.test(p.activity);
+        it.group.rotation.z = sleeping ? Math.PI / 2 : 0;
+        it.group.position.y = sleeping ? 0.35 : 0;
+        it.limbs!.forEach(
+          (limb, i) =>
+            (limb.rotation.x = moving
+              ? Math.sin(now * 0.011 + i * Math.PI) * 0.7
+              : playing && /talk/i.test(p.activity) && i > 1
+                ? Math.sin(now * 0.004 + i) * 0.25
+                : playing && /work|farm/i.test(p.activity) && i > 1
+                  ? -0.6 + Math.sin(now * 0.005) * 0.3
+                  : 0),
+        );
+        (it.body!.material as T.MeshLambertMaterial).color.set(
+          p.profile?.outfit ?? factionColors[c.faction] ?? "#b6b5a0",
+        );
+        (it.head!.material as T.MeshLambertMaterial).color.set(
+          p.profile?.skin ?? "#c9a783",
+        );
+        (it.hair!.material as T.MeshLambertMaterial).color.set(
+          p.profile?.hair ?? "#493c33",
+        );
+        it.label.textContent = c.name;
+        it.label.classList.toggle("chosen", selected === c.id);
+        it.label.title = p.activity;
+      }
+      for (const [id, it] of people)
+        if (!state.citizens.some((c) => c.id === id)) {
+          scene.remove(it.group);
+          it.label.remove();
+          people.delete(id);
+        }
+      if (
+        !street &&
+        options.current.follow &&
+        selected !== undefined &&
+        people.has(selected)
+      ) {
+        const p = people.get(selected)!.group.position,
+          delta = p.clone().sub(controls.target).multiplyScalar(0.08);
+        controls.target.add(delta);
+        camera.position.add(delta);
+      }
+      controls.autoRotate = !street && options.current.cinema;
+      controls.autoRotateSpeed = 0.45;
+      controls.update();
+      const night = calendar(state.tick).hour === 0;
+      ambient.intensity = night ? 0.65 : 2.3;
+      sun.intensity = night ? 0.3 : 2.8;
+      scene.background = new T.Color(
+        night
+          ? "#28384c"
+          : state.life.weather === "Rain"
+            ? "#abbac0"
+            : "#b9d1d2",
+      );
+      lamps.forEach((m) =>
+        (m.material as T.MeshLambertMaterial).color.set(
+          night ? "#ffe292" : "#c9c2a6",
+        ),
+      );
+      for (const it of [...buildings.values(), ...people.values()]) {
+        const pos = it.group.position
+          .clone()
+          .add(new T.Vector3(0, it.limbs ? 4 : 10, 0))
+          .project(camera);
+        it.label.style.transform =
+          "translate(-50%,-50%) translate(" +
+          ((pos.x + 1) * root.clientWidth) / 2 +
+          "px," +
+          ((-pos.y + 1) * root.clientHeight) / 2 +
+          "px)";
+        it.label.hidden =
+          pos.z < -1 ||
+          pos.z > 1 ||
+          Math.abs(pos.x) > 1.2 ||
+          Math.abs(pos.y) > 1.2;
+      }
+      renderer.render(scene, camera);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      controls.dispose();
+      el.removeEventListener("pointerdown", start as EventListener);
+      el.removeEventListener("pointerup", pick as EventListener);
+      el.removeEventListener("pointermove", hover as EventListener);
+      scene.traverse((o) => {
+        if (o instanceof T.Mesh) {
+          o.geometry.dispose();
+          if (!Array.isArray(o.material)) o.material.dispose();
+        }
+      });
+      mats.forEach((m) => m.dispose());
+      if (renderer instanceof T.WebGLRenderer) renderer.dispose();
+      el.remove();
+      labels.remove();
+      api.current = undefined;
+    };
+  }, [quality]);
+  return (
+    <section className="panel world3d" id="genesis-village">
+      <header>
+        <div>
+          <span className="eyebrow">Weather · {props.state.life.weather}</span>
+          <h2>My Village</h2>
+        </div>
+        <select
+          aria-label="3D graphics quality"
+          value={quality}
+          onChange={(e) => setQuality(e.target.value)}
+        >
+          <option value="low">Low graphics</option>
+          <option value="balanced">Balanced graphics</option>
+          <option value="high">High graphics</option>
+        </select>
+      </header>
+      <div className="world3d-tools">
+        <button onClick={() => api.current?.view("iso")}>Sky view</button>
+        <button onClick={() => api.current?.view("street")}>Street view</button>
+        <button onClick={() => api.current?.view("look-left")}>
+          Look left
+        </button>
+        <button onClick={() => api.current?.view("look-right")}>
+          Look right
+        </button>
+        <button onClick={() => api.current?.view("overhead")}>
+          From above
+        </button>
+        <button onClick={() => api.current?.view("rotate")}>Rotate</button>
+        <button aria-label="Zoom in" onClick={() => api.current?.zoom(1.25)}>
+          +
+        </button>
+        <button aria-label="Zoom out" onClick={() => api.current?.zoom(0.8)}>
+          −
+        </button>
+        <button
+          disabled={props.selected === undefined}
+          aria-pressed={follow}
+          onClick={() => setFollow(!follow)}
+        >
+          Follow villager
+        </button>
+        <button aria-pressed={cinema} onClick={() => setCinema(!cinema)}>
+          Slow camera tour
+        </button>
+      </div>
+      <div ref={host} className="world3d-stage" />
+      <p className="world3d-help">
+        Street View stands at your saved Observer position; use Observer
+        Presence to walk and Look left/right to turn. Sky View: drag to look
+        around. Pinch to zoom, or use two fingers to move across the village.
+        Tap a villager or building to learn more.{" "}
+        {props.placement ? "Tap a spot to review the building cost." : ""}
+      </p>
+      <details>
+        <summary>Graphics details</summary>
+        <p>
+          {mode}. Movement follows saved village activities. Detailed animations
+          inside buildings are still on the way.
+        </p>
+      </details>
+    </section>
+  );
 }

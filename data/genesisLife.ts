@@ -54,6 +54,7 @@ export type Building = {
   started: number;
 };
 export type LifeState = {
+  observer?: ObserverPresence;
   inquiry?: InquiryState;
   memory?: import("./genesisMemory").MemoryState;
   families?: import("./genesisFamilies").FamilyState;
@@ -729,6 +730,7 @@ export function advanceLiving(
   )
     throw Error("Money conservation invariant failed");
   evolveFamilies(out);
+  pulseObserver(out);
   return out;
 }
 export const BUILDING_TYPES: Record<
@@ -1435,4 +1437,435 @@ function inquiryEvening(out: LifeResult): number[] {
     },
   );
   return actors;
+}
+
+// Observer presence: bounded, event-driven fictional perception; no external tools.
+export const OBSERVER_MODES = [
+  "Invisible",
+  "The Feeling",
+  "The Visitor",
+  "The Creator",
+  "The Announcement",
+] as const;
+export type ObserverMode = (typeof OBSERVER_MODES)[number];
+export type ObserverWitness = {
+  citizen: number;
+  eventId: string;
+  perception: string;
+  interpretation: string;
+  confidence: number;
+};
+export type ObserverEncounter = {
+  id: string;
+  tick: number;
+  mode: ObserverMode;
+  x: number;
+  y: number;
+  kind: string;
+  witnesses: ObserverWitness[];
+};
+export type ObserverAwareness = {
+  status: string;
+  confidence: number;
+  claimReceived: boolean;
+  lastNotice: number;
+  evidence: string[];
+  interpretation: string;
+};
+export type ObserverPresence = {
+  mode: ObserverMode;
+  active: boolean;
+  x: number;
+  y: number;
+  sensitivity: number;
+  color: string;
+  label: string;
+  sequence: number;
+  lastPulse: number;
+  awareness: Record<string, ObserverAwareness>;
+  encounters: ObserverEncounter[];
+};
+export function observerPresence(s: LivingState): ObserverPresence {
+  return (
+    s.life.observer ?? {
+      mode: "The Feeling",
+      active: false,
+      x: 48,
+      y: 56,
+      sensitivity: 65,
+      color: "#ae9fdd",
+      label: "The Visitor",
+      sequence: 0,
+      lastPulse: -1,
+      awareness: {},
+      encounters: [],
+    }
+  );
+}
+export type PresenceRequest = {
+  action: string;
+  mode?: string;
+  x?: number;
+  y?: number;
+  sensitivity?: number;
+  color?: string;
+  label?: string;
+  citizen?: number;
+  message?: string;
+  confirmed?: boolean;
+};
+function presenceEvent(
+  out: LifeResult,
+  kind: string,
+  actors: number[],
+  text: string,
+  source = "observer-presence-rule-engine",
+  reason = "Validated fictional presence interaction",
+) {
+  const s = out.state,
+    o = s.life.observer!;
+  o.sequence++;
+  const actionId =
+    "presence:" + s.life.timeline + ":" + s.tick + ":" + o.sequence;
+  out.events.push({
+    tick: s.tick,
+    timeline: s.life.timeline,
+    actionId,
+    source,
+    kind,
+    actors,
+    text,
+    reason,
+  });
+  return actionId;
+}
+export function observerReaction(
+  s: LivingState,
+  id: number,
+  mode: ObserverMode,
+) {
+  const c = s.citizens.find((c) => c.id === id),
+    p = s.life.people[id];
+  if (!c || !p) throw Error("We could not find that villager.");
+  const traits = profileFor(c, p).traits,
+    skeptical = traits.Skepticism ?? 50;
+  if (p.stress >= 65)
+    return {
+      interpretation:
+        "I noticed it, but I need to deal with my own worries first.",
+      confidence: 15,
+    };
+  if (skeptical >= 65)
+    return {
+      interpretation:
+        mode === "The Feeling"
+          ? "Something felt different. That is an observation, not proof of a watcher."
+          : "I saw a visitor. That does not tell me who they are.",
+      confidence: 20,
+    };
+  if (p.curiosity >= 65)
+    return {
+      interpretation:
+        mode === "The Feeling"
+          ? "I want to compare this strange sensation with another observation before explaining it."
+          : "I would like to ask this visitor why they came.",
+      confidence: 35,
+    };
+  if ((traits.Sociability ?? 50) >= 65)
+    return {
+      interpretation:
+        "I might ask a friend whether they noticed the same thing.",
+      confidence: 25,
+    };
+  return {
+    interpretation:
+      "I noticed something unusual, but I am not drawing a conclusion.",
+    confidence: 15,
+  };
+}
+export function observerDetectionChance(s: LivingState, id: number): number {
+  const o = observerPresence(s),
+    c = s.citizens.find((c) => c.id === id),
+    p = s.life.people[id];
+  if (
+    !o.active ||
+    !c ||
+    !p ||
+    !["The Feeling", "The Visitor", "The Creator"].includes(o.mode)
+  )
+    return 0;
+  if (
+    s.tick % 4 === 0 ||
+    /sleep/i.test(p.activity) ||
+    p.fatigue >= 90 ||
+    p.health < 35
+  )
+    return 0;
+  const distance = Math.hypot(c.x - o.x, c.y - o.y),
+    radius = o.mode === "The Feeling" ? 18 : 24;
+  if (distance > radius) return 0;
+  // Visitor visibility uses segment/building intersections; no x-ray sightings.
+  if (o.mode !== "The Feeling") {
+    const obstacles = [
+      ...Object.entries(PLACES)
+        .filter(([k]) => k !== "homes")
+        .map(([id, p]) => ({ id, ...p })),
+      ...s.life.buildings,
+    ];
+    for (const b of obstacles) {
+      const dx = c.x - o.x,
+        dy = c.y - o.y,
+        den = dx * dx + dy * dy;
+      if (den === 0) continue;
+      const t = ((b.x - o.x) * dx + (b.y - o.y) * dy) / den;
+      if (
+        t > 0.06 &&
+        t < 0.94 &&
+        Math.hypot(o.x + t * dx - b.x, o.y + t * dy - b.y) < 4
+      )
+        return 0;
+    }
+  }
+  const busy = /work|study|research|test|treat/i.test(p.activity) ? 0.55 : 1,
+    weather = s.life.weather === "Rain" ? 0.7 : 1;
+  return Math.min(
+    0.95,
+    (0.2 + 0.65 * (1 - distance / radius)) *
+      (o.sensitivity / 100) *
+      busy *
+      weather *
+      (1 - p.stress / 160) *
+      (0.7 + p.curiosity / 200),
+  );
+}
+export function pulseObserver(out: LifeResult): void {
+  const s = out.state,
+    o = s.life.observer;
+  if (
+    !o ||
+    !o.active ||
+    o.mode === "Invisible" ||
+    o.mode === "The Announcement" ||
+    o.lastPulse === s.tick
+  )
+    return;
+  o.lastPulse = s.tick;
+  const notices: ObserverWitness[] = [];
+  for (const c of s.citizens) {
+    const old = o.awareness[c.id];
+    if (old && s.tick - old.lastNotice < 4) continue;
+    const chance = observerDetectionChance(s, c.id);
+    const draw =
+      (Math.imul(
+        (s.seed ^
+          Math.imul(c.id + 1, 2654435761) ^
+          Math.imul(s.tick + 1, 1597334677)) >>>
+          0,
+        2246822519,
+      ) >>>
+        0) /
+      4294967296;
+    if (draw >= chance) continue;
+    const reaction = observerReaction(s, c.id, o.mode),
+      perception =
+        o.mode === "The Feeling"
+          ? "A brief, unexplained sensory disturbance nearby."
+          : "A visible visitor was nearby" +
+            (o.label ? " with the label “" + o.label + "”." : ".");
+    const eventId = presenceEvent(
+      out,
+      "ObserverNotice",
+      [c.id],
+      c.name + " noticed: " + perception + " " + reaction.interpretation,
+      undefined,
+      "Local perception at " +
+        o.x +
+        ", " +
+        o.y +
+        "; mode " +
+        o.mode +
+        "; no creator identity inferred",
+    );
+    const witness = { citizen: c.id, eventId, perception, ...reaction };
+    notices.push(witness);
+    o.awareness[c.id] = {
+      status: old?.claimReceived
+        ? "Identity claim received"
+        : "Noticed something",
+      confidence: reaction.confidence,
+      claimReceived: old?.claimReceived ?? false,
+      lastNotice: s.tick,
+      evidence: [...(old?.evidence ?? []), eventId].slice(-24),
+      interpretation: reaction.interpretation,
+    };
+  }
+  if (notices.length) {
+    const id = presenceEvent(
+      out,
+      "ObserverEncounter",
+      [],
+      notices.length + " villagers noticed a local presence event.",
+      "observer-system",
+      "Underlying event; citizens receive only their own observation",
+    );
+    o.encounters.push({
+      id,
+      tick: s.tick,
+      mode: o.mode,
+      x: o.x,
+      y: o.y,
+      kind: "Local encounter",
+      witnesses: notices,
+    });
+    o.encounters = o.encounters.slice(-80);
+  }
+}
+export function applyObserverPresence(
+  previous: GenesisState,
+  request: PresenceRequest,
+): LifeResult {
+  const s = upgradeLiving(previous),
+    out = emptyResult(s);
+  s.life.observer = JSON.parse(JSON.stringify(observerPresence(s)));
+  const o = s.life.observer!;
+  const record = (text: string) =>
+    presenceEvent(
+      out,
+      "ObserverControl",
+      [],
+      text,
+      "observer-system",
+      "Observer configuration; not citizen knowledge",
+    );
+  if (request.action === "configure") {
+    if (request.mode !== undefined) {
+      if (!(OBSERVER_MODES as readonly string[]).includes(request.mode))
+        throw Error("Choose one of the five Observer modes.");
+      o.mode = request.mode as ObserverMode;
+    }
+    if (request.sensitivity !== undefined) {
+      if (
+        !Number.isFinite(request.sensitivity) ||
+        request.sensitivity < 0 ||
+        request.sensitivity > 100
+      )
+        throw Error("Sensitivity must be between 0 and 100.");
+      o.sensitivity = request.sensitivity;
+    }
+    if (request.color !== undefined) {
+      if (!/^#[0-9a-f]{6}$/i.test(request.color))
+        throw Error("Choose a valid avatar color.");
+      o.color = request.color;
+    }
+    if (request.label !== undefined) {
+      if (request.label.length > 40 || /[<> -]/.test(request.label))
+        throw Error("Keep the visitor label short and plain.");
+      o.label = request.label;
+    }
+    record("Observer mode saved: " + o.mode + ".");
+  } else if (request.action === "enter") {
+    if (!o.active) {
+      o.active = true;
+      record(
+        "Observer arrived at " + o.x + ", " + o.y + " in " + o.mode + " mode.",
+      );
+    }
+    pulseObserver(out);
+  } else if (request.action === "leave") {
+    if (o.active) {
+      o.active = false;
+      record("Observer departed. Earlier memories remain.");
+    }
+  } else if (request.action === "move") {
+    if (
+      !Number.isFinite(request.x) ||
+      !Number.isFinite(request.y) ||
+      request.x! < 2 ||
+      request.x! > 98 ||
+      request.y! < 2 ||
+      request.y! > 98
+    )
+      throw Error("Choose a village position between 2 and 98.");
+    if (Math.hypot(request.x! - o.x, request.y! - o.y) > 0.01) {
+      o.x = request.x!;
+      o.y = request.y!;
+      record("Observer moved to " + o.x + ", " + o.y + ".");
+    }
+    pulseObserver(out);
+  } else if (request.action === "notice") {
+    pulseObserver(out);
+  } else if (request.action === "reveal" || request.action === "announce") {
+    const isClaim = request.action === "reveal";
+    if (isClaim && o.mode !== "The Creator")
+      throw Error("Choose The Creator mode before sharing a creator claim.");
+    if (!isClaim && o.mode !== "The Announcement")
+      throw Error("Choose The Announcement mode before broadcasting.");
+    const all = request.citizen === undefined;
+    if (all && !request.confirmed)
+      throw Error("Confirm before sending a village-wide message.");
+    const recipients = all
+      ? s.citizens
+      : s.citizens.filter((c) => c.id === request.citizen);
+    if (!recipients.length) throw Error("We could not find that villager.");
+    const message = isClaim
+      ? "Abby says she designed this simulated world."
+      : request.message?.trim();
+    if (!message || message.length > 240 || /[ -]/.test(message))
+      throw Error("Write a message of 1–240 plain characters.");
+    const witnesses: ObserverWitness[] = [];
+    for (const c of recipients) {
+      const old = o.awareness[c.id],
+        interpretation = isClaim
+          ? "I have received a creator claim. I still need evidence before accepting it."
+          : "I received the village announcement; I have not verified its claims.";
+      const id = presenceEvent(
+        out,
+        isClaim ? "ObserverClaim" : "ObserverAnnouncement",
+        [c.id],
+        c.name +
+          " received via " +
+          (isClaim ? "direct Observer message" : "public village noticeboard") +
+          ": “" +
+          message +
+          "” " +
+          interpretation,
+        undefined,
+        "Recorded information delivery, not proof or automatic belief",
+      );
+      o.awareness[c.id] = {
+        status: isClaim
+          ? "Identity claim received"
+          : (old?.status ?? "Notice received"),
+        confidence: old?.confidence ?? 0,
+        claimReceived: isClaim || old?.claimReceived || false,
+        lastNotice: old?.lastNotice ?? -100,
+        evidence: [...(old?.evidence ?? []), id].slice(-24),
+        interpretation,
+      };
+      witnesses.push({
+        citizen: c.id,
+        eventId: id,
+        perception: message,
+        interpretation,
+        confidence: old?.confidence ?? 0,
+      });
+    }
+    const id = record(
+      (isClaim ? "Creator claim" : "Announcement") +
+        " delivered to " +
+        recipients.length +
+        " recipient(s).",
+    );
+    o.encounters.push({
+      id,
+      tick: s.tick,
+      mode: o.mode,
+      x: o.x,
+      y: o.y,
+      kind: isClaim ? "Creator claim" : "Public announcement",
+      witnesses,
+    });
+    o.encounters = o.encounters.slice(-80);
+  } else throw Error("That Observer action is not supported yet.");
+  return out;
 }

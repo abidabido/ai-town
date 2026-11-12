@@ -1,3 +1,4 @@
+import { applyObserverPresence } from "../data/genesisLife";
 import { recordMemories } from "../data/genesisMemory";
 import {
   mutation,
@@ -560,5 +561,55 @@ export const researchEvidence = query({
       .query("genesisEvents")
       .withIndex("action", (q) => q.eq("actionId", args.actionId))
       .first();
+  },
+});
+
+export const observerPresenceAction = mutation({
+  args: {
+    expectedRevision: v.number(),
+    action: v.string(),
+    mode: v.optional(v.string()),
+    x: v.optional(v.number()),
+    y: v.optional(v.number()),
+    sensitivity: v.optional(v.number()),
+    color: v.optional(v.string()),
+    label: v.optional(v.string()),
+    citizen: v.optional(v.number()),
+    message: v.optional(v.string()),
+    confirmed: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const doc = await load(ctx);
+    if (!doc) return { ok: false, message: "Open the saved village first." };
+    if ((doc.revision ?? 0) !== args.expectedRevision)
+      return {
+        ok: false,
+        message: "The village changed. Please try that again.",
+      };
+    try {
+      const out = applyObserverPresence(doc.state, args);
+      const noticed = out.events.filter(
+        (e) => e.kind === "ObserverNotice",
+      ).length;
+      await persist(ctx, doc, out);
+      return {
+        ok: true,
+        message:
+          args.action === "notice"
+            ? noticed
+              ? noticed + " nearby villager(s) noticed something."
+              : "Nobody new noticed. They may be busy, out of range, or still within the quiet period."
+            : "Observer changes saved.",
+        noticed,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "That change did not save. Please try again.",
+      };
+    }
   },
 });
