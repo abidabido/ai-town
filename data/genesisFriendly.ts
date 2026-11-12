@@ -154,6 +154,11 @@ export function friendlyIntent(input: string): {
 
 export const eventKindLabel = (kind: string) =>
   ({
+    ObserverControl: "Your visit",
+    ObserverNotice: "An unusual encounter",
+    ObserverEncounter: "Who noticed",
+    ObserverClaim: "A creator claim",
+    ObserverAnnouncement: "Village announcement",
     ResearchQuestion: "A new question",
     ResearchDiscussion: "Comparing explanations",
     ResearchPlan: "Planning a test",

@@ -241,3 +241,5 @@ assert.throws(
   () => life.applyObserverPresence(fresh, { action: "move", x: 48, y: 51 }),
   /inside a building/,
 );
+
+const attention=copy(entered.state);attention.life.people[0].activity='Free time';attention.life.people[0].stress=0;const relaxedChance=life.observerDetectionChance(attention,0);attention.life.people[0].activity='Working';assert.ok(life.observerDetectionChance(attention,0)<relaxedChance);attention.life.people[0].activity='Free time';attention.life.weather='Rain';assert.ok(life.observerDetectionChance(attention,0)<relaxedChance);attention.life.observer.sensitivity=0;assert.equal(life.observerDetectionChance(attention,0),0);
