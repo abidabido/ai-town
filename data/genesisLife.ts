@@ -54,6 +54,7 @@ export type Building = {
   started: number;
 };
 export type LifeState = {
+  digital?: DigitalLife;
   observer?: ObserverPresence;
   inquiry?: InquiryState;
   memory?: import("./genesisMemory").MemoryState;
@@ -303,7 +304,8 @@ export function advanceLiving(
       Math.floor(random() * 4)
     ];
   const researchUsed = options.inquiry === false ? [] : inquiryEvening(out);
-  const used = new Set<number>(researchUsed);
+  const phoneUsed = digitalEvening(out, researchUsed);
+  const used = new Set<number>([...researchUsed, ...phoneUsed]);
   for (const c of [
     ...s.citizens.slice(s.tick % s.citizens.length),
     ...s.citizens.slice(0, s.tick % s.citizens.length),
@@ -318,7 +320,7 @@ export function advanceLiving(
       85 - p.stress * 0.4 - p.loneliness * 0.25 - p.hunger * 0.2,
     );
     if (p.hunger > 85) p.health = Math.max(25, p.health - 3);
-    if (researchUsed.includes(c.id)) continue;
+    if (researchUsed.includes(c.id) || phoneUsed.includes(c.id)) continue;
     if (hour === 0 || p.fatigue >= 85) {
       p.fatigue = clamp(p.fatigue - 55);
       p.activity = "Sleeping";
@@ -1482,8 +1484,8 @@ export type ObserverPresence = {
   label: string;
   sequence: number;
   lastPulse: number;
-  pulsePosition?: {x:number;y:number};
-  attempted?: Record<string,number>;
+  pulsePosition?: { x: number; y: number };
+  attempted?: Record<string, number>;
   awareness: Record<string, ObserverAwareness>;
   encounters: ObserverEncounter[];
 };
@@ -1648,20 +1650,22 @@ export function pulseObserver(out: LifeResult): void {
     !o.active ||
     o.mode === "Invisible" ||
     o.mode === "The Announcement" ||
-    (o.lastPulse === s.tick && (!o.pulsePosition || Math.hypot(o.x-o.pulsePosition.x,o.y-o.pulsePosition.y)<4))
+    (o.lastPulse === s.tick &&
+      (!o.pulsePosition ||
+        Math.hypot(o.x - o.pulsePosition.x, o.y - o.pulsePosition.y) < 4))
   )
     return;
   o.lastPulse = s.tick;
-  o.pulsePosition={x:o.x,y:o.y};
-  o.attempted??={};
+  o.pulsePosition = { x: o.x, y: o.y };
+  o.attempted ??= {};
   const notices: ObserverWitness[] = [];
   for (const c of s.citizens) {
     const old = o.awareness[c.id];
     if (old && s.tick - old.lastNotice < 4) continue;
-    if(o.attempted[c.id]===s.tick)continue;
+    if (o.attempted[c.id] === s.tick) continue;
     const chance = observerDetectionChance(s, c.id);
-    if(chance<=0)continue;
-    o.attempted[c.id]=s.tick;
+    if (chance <= 0) continue;
+    o.attempted[c.id] = s.tick;
     const draw =
       (Math.imul(
         (s.seed ^
@@ -1888,4 +1892,644 @@ export function applyObserverPresence(
     o.encounters = o.encounters.slice(-80);
   } else throw Error("That Observer action is not supported yet.");
   return out;
+}
+
+// Fictional digital life. All decisions are bounded rules; no real social accounts.
+export type DigitalProfile = {
+  phone: boolean;
+  posting: boolean;
+  blocked: number[];
+};
+export type GenesisText = {
+  id: string;
+  thread: string;
+  from: number;
+  to: number;
+  tick: number;
+  body: string;
+  readTick?: number;
+  kind: "invite" | "reply";
+  meeting: string;
+};
+export type WhisperComment = {
+  id: string;
+  author: number;
+  tick: number;
+  body: string;
+};
+export type WhisperPost = {
+  id: string;
+  author: number;
+  tick: number;
+  body: string;
+  topic: string;
+  evidence: string;
+  comments: WhisperComment[];
+  reactions: number[];
+  hidden: boolean;
+};
+export type DigitalMeeting = {
+  id: string;
+  organizer: number;
+  guest: number;
+  topic: string;
+  location: string;
+  start: number;
+  status: "invited" | "accepted" | "declined" | "attended" | "missed";
+  source: string;
+  outcome?: string;
+};
+export type DigitalKnowledge = {
+  source: string;
+  receivedFrom: number;
+  tick: number;
+  channel: "public";
+  summary: string;
+};
+export type DigitalLife = {
+  version: 1;
+  enabled: boolean;
+  sequence: number;
+  lastTick: number;
+  profiles: Record<string, DigitalProfile>;
+  messages: GenesisText[];
+  posts: WhisperPost[];
+  meetings: DigitalMeeting[];
+  knowledge: Record<string, DigitalKnowledge[]>;
+};
+export function digitalLife(s: LivingState): DigitalLife {
+  return (
+    s.life.digital ?? {
+      version: 1,
+      enabled: false,
+      sequence: 0,
+      lastTick: -1,
+      profiles: {},
+      messages: [],
+      posts: [],
+      meetings: [],
+      knowledge: {},
+    }
+  );
+}
+function socialProfile(s: LivingState, id: number): DigitalProfile {
+  const d = s.life.digital!;
+  return (
+    d.profiles[id] ??
+    (d.profiles[id] = { phone: true, posting: true, blocked: [] })
+  );
+}
+function digitalAdult(s: LivingState, id: number) {
+  return (
+    !!s.citizens.find((c) => c.id === id) &&
+    !!s.life.people[id] &&
+    s.life.people[id].ageAtStart >= 18
+  );
+}
+function digitalReady(s: LivingState, id: number) {
+  const p = s.life.people[id];
+  return (
+    digitalAdult(s, id) &&
+    p.hunger + 12 < 45 &&
+    p.fatigue + 9 < 85 &&
+    p.health >= 65 &&
+    p.stress < 70
+  );
+}
+function digitalBlocked(s: LivingState, a: number, b: number) {
+  return (
+    socialProfile(s, a).blocked.includes(b) ||
+    socialProfile(s, b).blocked.includes(a)
+  );
+}
+function socialTraits(s: LivingState, id: number) {
+  return profileFor(s.citizens.find((c) => c.id === id)!, s.life.people[id]);
+}
+function socialTrust(s: LivingState, a: number, b: number) {
+  return s.trust[[a, b].sort((x, y) => x - y).join(":")] ?? 0;
+}
+function socialDelta(s: LivingState, a: number, b: number, amount: number) {
+  const key = [a, b].sort((x, y) => x - y).join(":");
+  s.trust[key] = Math.max(-100, Math.min(100, (s.trust[key] ?? 0) + amount));
+}
+function digitalRecord(
+  out: LifeResult,
+  kind: string,
+  actors: number[],
+  text: string,
+  reason: string,
+) {
+  const s = out.state,
+    d = s.life.digital!;
+  const actionId = "digital:" + s.life.timeline + ":" + ++d.sequence;
+  out.events.push({
+    tick: s.tick,
+    timeline: s.life.timeline,
+    actionId,
+    kind,
+    actors,
+    text,
+    reason,
+    source: "digital-rule-engine",
+  });
+  return actionId;
+}
+export function digitalView(s: LivingState, viewer: number | "observer") {
+  const d = digitalLife(s);
+  if (viewer !== "observer" && !s.citizens.some((c) => c.id === viewer))
+    throw Error("We could not find that villager.");
+  const blocked = (author: number) =>
+    viewer !== "observer" &&
+    (d.profiles[viewer]?.blocked.includes(author) ||
+      d.profiles[author]?.blocked.includes(viewer));
+  return {
+    messages: d.messages.filter(
+      (m) =>
+        viewer === "observer" ||
+        ((m.from === viewer || m.to === viewer) &&
+          !blocked(m.from === viewer ? m.to : m.from)),
+    ),
+    posts: d.posts
+      .filter((p) => !p.hidden && !blocked(p.author))
+      .map((p) => ({
+        ...p,
+        comments: p.comments.filter((c) => !blocked(c.author)),
+        reactions: p.reactions.filter((id) => !blocked(id)),
+      })),
+    meetings: d.meetings.filter(
+      (m) =>
+        viewer === "observer" || m.organizer === viewer || m.guest === viewer,
+    ),
+    knowledge:
+      viewer === "observer"
+        ? d.knowledge
+        : { [viewer]: d.knowledge[viewer] ?? [] },
+  };
+}
+export function configureDigital(
+  previous: GenesisState,
+  args: {
+    enabled?: boolean;
+    citizen?: number;
+    phone?: boolean;
+    posting?: boolean;
+    block?: number;
+    unblock?: number;
+    hidePost?: string;
+  },
+): LifeResult {
+  const s = upgradeLiving(previous),
+    out = emptyResult(s);
+  s.life.digital = JSON.parse(JSON.stringify(digitalLife(s)));
+  const d = s.life.digital!;
+  if (args.enabled !== undefined) d.enabled = args.enabled;
+  if (args.citizen !== undefined) {
+    if (!digitalAdult(s, args.citizen))
+      throw Error("This first phone pilot is available to adults only.");
+    const p = socialProfile(s, args.citizen);
+    if (args.phone !== undefined) p.phone = args.phone;
+    if (args.posting !== undefined) p.posting = args.posting;
+    for (const [key, remove] of [
+      ["block", false],
+      ["unblock", true],
+    ] as const) {
+      const target = args[key];
+      if (target !== undefined) {
+        if (!digitalAdult(s, target) || target === args.citizen)
+          throw Error("Choose another adult villager.");
+        p.blocked = remove
+          ? p.blocked.filter((id) => id !== target)
+          : [...new Set([...p.blocked, target])];
+      }
+    }
+  }
+  if (args.hidePost) {
+    const post = d.posts.find((p) => p.id === args.hidePost);
+    if (!post) throw Error("We could not find that post.");
+    post.hidden = true;
+  }
+  for (const c of s.citizens) if (digitalAdult(s, c.id)) socialProfile(s, c.id);
+  // Configuration is administrator knowledge, never a citizen diary entry.
+  const actionId = "digital-control:" + s.life.timeline + ":" + ++d.sequence;
+  out.events.push({
+    tick: s.tick,
+    timeline: s.life.timeline,
+    actionId,
+    kind: "DigitalControl",
+    actors: [],
+    text: args.hidePost
+      ? "The Observer hid a WHISPER post."
+      : "Village phone preferences saved. Digital life is " +
+        (d.enabled ? "on." : "off."),
+    reason: "Validated Observer configuration",
+    source: "administrator",
+  });
+  return out;
+}
+export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
+  const s = out.state,
+    d = s.life.digital;
+  if (!d?.enabled || s.tick % 4 !== 3 || d.lastTick === s.tick) return [];
+  d.lastTick = s.tick;
+  const used = new Set(reserved),
+    own = new Set<number>(),
+    available = (id: number) =>
+      !used.has(id) && digitalReady(s, id) && socialProfile(s, id).phone;
+  const consume = (id: number, activity: string) => {
+    used.add(id);
+    own.add(id);
+    s.life.people[id].activity = activity;
+    s.life.people[id].fatigue = Math.min(100, s.life.people[id].fatigue + 3);
+  };
+  for (const m of d.meetings.filter(
+    (m) => m.status === "invited" && s.tick >= m.start + 8,
+  )) {
+    m.status = "missed";
+    m.outcome = "The invitation expired without an accepted plan.";
+    digitalRecord(
+      out,
+      "DigitalMissed",
+      [m.organizer],
+      "A meetup invitation expired without an accepted plan.",
+      "Unanswered invitation " + m.source + "; no relationship change",
+    );
+  }
+  // Agreed meetups take a real activity slot and only proceed if both can attend.
+  for (const m of d.meetings.filter(
+    (m) => m.status === "accepted" && m.start <= s.tick,
+  )) {
+    if (
+      available(m.organizer) &&
+      available(m.guest) &&
+      !digitalBlocked(s, m.organizer, m.guest)
+    ) {
+      move(s, m.organizer, m.location, -2);
+      move(s, m.guest, m.location, 2);
+      consume(m.organizer, "At a planned " + m.topic + " meetup");
+      consume(m.guest, "At a planned " + m.topic + " meetup");
+      m.status = "attended";
+      m.outcome = "Both attended; trust +4 and loneliness -12 each.";
+      socialDelta(s, m.organizer, m.guest, 4);
+      for (const id of [m.organizer, m.guest])
+        s.life.people[id].loneliness = Math.max(
+          0,
+          s.life.people[id].loneliness - 12,
+        );
+      digitalRecord(
+        out,
+        "DigitalMeetup",
+        [m.organizer, m.guest],
+        s.citizens.find((c) => c.id === m.organizer)!.name +
+          " and " +
+          s.citizens.find((c) => c.id === m.guest)!.name +
+          " kept their " +
+          m.topic +
+          " meetup at " +
+          m.location +
+          ". Spending time together strengthened their trust.",
+        "Scheduled invitation " +
+          m.source +
+          "; mutual acceptance; both available; trust +4",
+      );
+    } else {
+      m.status = "missed";
+      m.outcome =
+        "The meeting did not happen because someone was unavailable or the contact was blocked.";
+      digitalRecord(
+        out,
+        "DigitalMissed",
+        [m.organizer, m.guest],
+        "A planned " +
+          m.topic +
+          " meetup did not take place. No friendship change was applied.",
+        "Invitation " +
+          m.source +
+          "; urgent needs, another reserved activity, phone preference or blocking took priority",
+      );
+    }
+  }
+  const order = [
+    ...s.citizens.slice(s.tick % s.citizens.length),
+    ...s.citizens.slice(0, s.tick % s.citizens.length),
+  ];
+  let phoneActions = 0;
+  for (const c of order) {
+    if (phoneActions >= 4) break;
+    if (!available(c.id)) continue;
+    const p = s.life.people[c.id],
+      profile = socialTraits(s, c.id),
+      traits = profile.traits;
+    // A recipient decides later, never an immediate fabricated two-sided exchange.
+    const invitation = d.messages.find(
+      (m) =>
+        m.to === c.id &&
+        m.kind === "invite" &&
+        m.tick < s.tick &&
+        m.readTick === undefined &&
+        !digitalBlocked(s, m.from, m.to),
+    );
+    if (invitation) {
+      const meeting = d.meetings.find((m) => m.id === invitation.meeting);
+      if (meeting?.status === "invited") {
+        invitation.readTick = s.tick;
+        digitalRecord(
+          out,
+          "DigitalRead",
+          [c.id],
+          c.name + " read a private invitation: “" + invitation.body + "”",
+          "Read receipt for " + invitation.id,
+        );
+        const accepted =
+          socialTrust(s, c.id, invitation.from) >= 0 &&
+          (p.loneliness >= 20 || (traits.Sociability ?? 50) >= 45);
+        meeting.status = accepted ? "accepted" : "declined";
+        if (accepted) meeting.start = s.tick + 4;
+        const body = accepted
+          ? "Yes. Let’s meet at " +
+            meeting.location +
+            " tomorrow evening and talk about " +
+            meeting.topic +
+            "."
+          : "Thanks for asking. I’m keeping tomorrow evening to myself.";
+        const id = digitalRecord(
+          out,
+          "DigitalMessage",
+          [c.id],
+          c.name +
+            " texted " +
+            s.citizens.find((x) => x.id === invitation.from)!.name +
+            ": “" +
+            body +
+            "”",
+          "Private reply to " +
+            invitation.id +
+            "; only the two participants receive this message" +
+            (accepted
+              ? "; mutual plan, trust +1."
+              : "; declined, no relationship change."),
+        );
+        d.messages.push({
+          id,
+          thread: invitation.thread,
+          from: c.id,
+          to: invitation.from,
+          tick: s.tick,
+          body,
+          kind: "reply",
+          meeting: meeting.id,
+        });
+        if (accepted) socialDelta(s, c.id, invitation.from, 1);
+        consume(c.id, "Texting a reply");
+        phoneActions++;
+        continue;
+      }
+    }
+    // Reading a public post delivers only its published contents and source link.
+    const post = d.posts
+      .slice()
+      .reverse()
+      .find(
+        (post) =>
+          post.author !== c.id &&
+          !post.hidden &&
+          !digitalBlocked(s, c.id, post.author) &&
+          !post.reactions.includes(c.id) &&
+          !post.comments.some((x) => x.author === c.id) &&
+          (d.knowledge[c.id] ?? []).every((k) => k.source !== post.id),
+      );
+    const roll =
+      (Math.imul(
+        s.seed ^ ((c.id + 1) * 1664525) ^ (s.tick * 1013904223),
+        2246822519,
+      ) >>>
+        0) /
+      4294967296;
+    const choice =
+      (Math.imul(
+        s.seed ^ Math.imul(c.id + 19, 1597334677) ^ (s.tick * 747796405),
+        1664525,
+      ) >>>
+        0) /
+      4294967296;
+    const preferText = p.loneliness >= 35 && choice < 0.55;
+    if (post && !preferText && choice < 0.45) {
+      const author = s.citizens.find((x) => x.id === post.author);
+      if (!author) continue;
+      d.knowledge[c.id] = [
+        ...(d.knowledge[c.id] ?? []),
+        {
+          source: post.id,
+          receivedFrom: post.author,
+          tick: s.tick,
+          channel: "public" as const,
+          summary: post.body,
+        },
+      ].slice(-24);
+      const skeptical = (traits.Skepticism ?? 50) >= 65,
+        body = skeptical
+          ? "Thanks for recording this. What would help us test the explanation?"
+          : "Thanks for sharing what you actually noticed.";
+      if ((traits.Sociability ?? 50) >= 45 && post.comments.length < 6) {
+        const id = digitalRecord(
+          out,
+          "WhisperComment",
+          [c.id],
+          c.name + " replied to " + author.name + " on WHISPER: “" + body + "”",
+          "Read public post " +
+            post.id +
+            "; claim remains an attributed report; trust +1",
+        );
+        post.comments.push({ id, author: c.id, tick: s.tick, body });
+        socialDelta(s, c.id, post.author, 1);
+      } else {
+        post.reactions.push(c.id);
+        digitalRecord(
+          out,
+          "WhisperReaction",
+          [c.id],
+          c.name + " reacted to " + author.name + "’s WHISPER post.",
+          "Read public post " +
+            post.id +
+            "; a reaction is not verification of the claim.",
+        );
+      }
+      digitalRecord(
+        out,
+        "DigitalKnowledge",
+        [c.id],
+        c.name +
+          " read " +
+          author.name +
+          "’s public report: “" +
+          post.body +
+          "”",
+        "Information delivered by public post " +
+          post.id +
+          "; original source " +
+          post.evidence +
+          "; not a direct observation or established truth",
+      );
+      consume(c.id, "Reading WHISPER");
+      phoneActions++;
+      continue;
+    }
+    const source = (s.life.memory?.diaries[c.id] ?? [])
+      .slice()
+      .reverse()
+      .find(
+        (e) =>
+          ["Work", "Hobby", "ResearchFinding", "ObserverNotice"].includes(
+            e.kind,
+          ) &&
+          e.participants.includes(c.id) &&
+          !d.posts.some(
+            (post) => post.author === c.id && post.evidence === e.actionId,
+          ) &&
+          e.timeline === s.life.timeline,
+      );
+    const publicChance =
+      ((traits.Sociability ?? 50) + (traits.Confidence ?? 50)) / 250;
+    if (
+      source &&
+      socialProfile(s, c.id).posting &&
+      !preferText &&
+      choice < 0.8 &&
+      roll < publicChance
+    ) {
+      const body =
+          "From my own experience: " + source.observation.slice(0, 280),
+        id = digitalRecord(
+          out,
+          "WhisperPost",
+          [c.id],
+          c.name + " posted on WHISPER: “" + body + "”",
+          "Autonomous public sharing of own recorded event " +
+            source.actionId +
+            "; original source " +
+            source.source +
+            "; not independent verification",
+        );
+      d.posts.push({
+        id,
+        author: c.id,
+        tick: s.tick,
+        body,
+        topic:
+          source.kind === "ObserverNotice"
+            ? "Something unusual"
+            : source.kind === "ResearchFinding"
+              ? "Research"
+              : "Village life",
+        evidence: source.actionId,
+        comments: [],
+        reactions: [],
+        hidden: false,
+      });
+      consume(c.id, "Writing a WHISPER post");
+      phoneActions++;
+      continue;
+    }
+    if (
+      d.meetings.some(
+        (m) =>
+          ["invited", "accepted"].includes(m.status) &&
+          (m.organizer === c.id || m.guest === c.id),
+      )
+    )
+      continue;
+    const peer = order.find(
+      (other) =>
+        other.id !== c.id &&
+        digitalAdult(s, other.id) &&
+        socialProfile(s, other.id).phone &&
+        !digitalBlocked(s, c.id, other.id) &&
+        socialTrust(s, c.id, other.id) >= 0 &&
+        Math.hypot(other.x - c.x, other.y - c.y) > 10 &&
+        (socialTraits(s, other.id).hobbies.some((h) =>
+          profile.hobbies.includes(h),
+        ) ||
+          p.loneliness >= 35),
+    );
+    if (peer && roll < 0.55) {
+      const shared =
+        profile.hobbies.find((h) =>
+          socialTraits(s, peer.id).hobbies.includes(h),
+        ) ?? "daily life";
+      const location = /garden|cook|food/i.test(shared)
+        ? "gardens"
+        : /astronomy|research|science/i.test(shared)
+          ? "observatory"
+          : "archive";
+      const body =
+        "Would you like to meet at " +
+        location +
+        " tomorrow evening to talk about " +
+        shared.toLowerCase() +
+        "?";
+      const meeting = "meeting:" + s.life.timeline + ":" + (d.sequence + 1),
+        id = digitalRecord(
+          out,
+          "DigitalMessage",
+          [c.id],
+          c.name + " texted " + peer.name + ": “" + body + "”",
+          "Autonomous invitation based on " +
+            (shared === "daily life"
+              ? "social need"
+              : "shared interest " + shared) +
+            "; distant contact; no attendance or agreement assumed",
+        );
+      d.messages.push({
+        id,
+        thread: [c.id, peer.id].sort((a, b) => a - b).join(":"),
+        from: c.id,
+        to: peer.id,
+        tick: s.tick,
+        body,
+        kind: "invite",
+        meeting,
+      });
+      d.meetings.push({
+        id: meeting,
+        organizer: c.id,
+        guest: peer.id,
+        topic: shared.toLowerCase(),
+        location,
+        start: s.tick + 4,
+        status: "invited",
+        source: id,
+      });
+      consume(c.id, "Texting a meetup invitation");
+      phoneActions++;
+    }
+  }
+  // Read receipts for replies are recorded only when the recipient checks their phone.
+  for (const m of d.messages.filter(
+    (m) =>
+      m.kind === "reply" &&
+      m.tick < s.tick &&
+      m.readTick === undefined &&
+      available(m.to) &&
+      !digitalBlocked(s, m.from, m.to),
+  )) {
+    if (phoneActions >= 4) break;
+    phoneActions++;
+    m.readTick = s.tick;
+    digitalRecord(
+      out,
+      "DigitalRead",
+      [m.to],
+      "A villager read a private reply: “" + m.body + "”",
+      "Read receipt for " + m.id + "; no new relationship change",
+    );
+    consume(m.to, "Checking a text reply");
+  }
+  d.messages = d.messages.slice(-120);
+  d.posts = d.posts.slice(-40);
+  d.meetings = d.meetings
+    .filter(
+      (m) =>
+        ["invited", "accepted"].includes(m.status) || s.tick - m.start < 40,
+    )
+    .slice(-40);
+  return [...own];
 }

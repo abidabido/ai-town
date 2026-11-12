@@ -1,3 +1,4 @@
+import ConnectedSociety from "./ConnectedSociety";
 import ObserverPresencePanel from "./ObserverPresence";
 import ResearchLibrary from "./ResearchLibrary";
 import { DailyTea, GenesisHelp } from "./GenesisFriendly";
@@ -475,6 +476,8 @@ export default function Genesis() {
                 ["The People", "genesis-people"],
                 ["Love & Families", "genesis-families"],
                 ["Town Talk", "genesis-talk"],
+                ["Messages", "genesis-messages"],
+                ["WHISPER", "genesis-whisper"],
                 ["Research Library", "genesis-research"],
                 ["Observer Presence", "genesis-presence"],
                 ["What’s Happening", "genesis-news"],
@@ -896,6 +899,7 @@ export default function Genesis() {
                 Up to 100 updates from the latest 1,000 saved events.
               </small>
             </section>
+            <ConnectedSociety state={state} revision={current!.revision} />
             <ObserverPresencePanel
               state={state}
               revision={current!.revision}

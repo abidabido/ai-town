@@ -1,4 +1,5 @@
 import { applyObserverPresence } from "../data/genesisLife";
+import { configureDigital } from "../data/genesisLife";
 import { recordMemories } from "../data/genesisMemory";
 import {
   mutation,
@@ -642,6 +643,39 @@ export const observerPresenceAction = mutation({
           error instanceof Error
             ? error.message
             : "That change did not save. Please try again.",
+      };
+    }
+  },
+});
+
+export const digitalSettings = mutation({
+  args: {
+    expectedRevision: v.number(),
+    enabled: v.optional(v.boolean()),
+    citizen: v.optional(v.number()),
+    phone: v.optional(v.boolean()),
+    posting: v.optional(v.boolean()),
+    block: v.optional(v.number()),
+    unblock: v.optional(v.number()),
+    hidePost: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const doc = await load(ctx);
+    if (!doc) return { ok: false, message: "Open your saved village first." };
+    if ((doc.revision ?? 0) !== args.expectedRevision)
+      return { ok: false, message: "The village changed. Please try again." };
+    try {
+      const out = configureDigital(doc.state, args);
+      await persist(ctx, doc, out);
+      return {
+        ok: true,
+        message: "Your village phone settings have been saved.",
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "That change did not save.",
       };
     }
   },

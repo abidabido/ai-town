@@ -304,6 +304,75 @@ const count = (t) => [...rows.values()].filter((r) => r.table === t).length;
     ),
   );
   assert.equal(current.state.life.observer.mode, "The Announcement");
+  current = await call("current");
+  const digitalBefore = count("genesisEvents");
+  const staleDigital = await call("digitalSettings", {
+    expectedRevision: current.revision - 1,
+    enabled: true,
+  });
+  assert.equal(staleDigital.ok, false);
+  assert.equal(count("genesisEvents"), digitalBefore);
+  let digitalResult = await call("digitalSettings", {
+    expectedRevision: current.revision,
+    enabled: true,
+  });
+  assert.ok(digitalResult.ok);
+  current = await call("current");
+  assert.ok(current.state.life.digital.enabled);
+  const socialFixture = copy(current.state);
+  socialFixture.supplies = 2000;
+  for (const p of Object.values(socialFixture.life.people)) {
+    Object.assign(p, {
+      hunger: 0,
+      fatigue: 10,
+      health: 95,
+      stress: 5,
+      loneliness: 55,
+    });
+    p.profile.hobbies = ["Astronomy"];
+    p.profile.traits.Sociability = 80;
+    p.profile.traits.Confidence = 80;
+    p.profile.traits["Romance interest"] = 0;
+  }
+  await db.patch(current.id, { state: socialFixture });
+  for (let day = 0; day < 20; day++) {
+    current = await call("current");
+    await call("advance", {
+      expectedTick: current.state.tick,
+      expectedRevision: current.revision,
+      steps: 4,
+    });
+  }
+  current = await call("current");
+  assert.ok(
+    current.state.life.digital.messages.some((m) => m.kind === "reply"),
+  );
+  assert.ok(current.state.life.digital.posts.some((p) => p.comments.length));
+  assert.ok(
+    current.state.life.digital.meetings.some((m) => m.status === "attended"),
+  );
+  const savedDigital = copy(current.state.life.digital);
+  const reloadedDigital = await call("current");
+  assert.deepEqual(reloadedDigital.state.life.digital, savedDigital);
+  for (const post of savedDigital.posts) {
+    const evidence = await call("researchEvidence", {
+      actionId: post.evidence,
+    });
+    assert.ok(evidence && evidence.actors.includes(post.author));
+  }
+  digitalResult = await call("digitalSettings", {
+    expectedRevision: current.revision,
+    citizen: 0,
+    block: 1,
+  });
+  assert.ok(digitalResult.ok);
+  current = await call("current");
+  assert.ok(current.state.life.digital.profiles[0].blocked.includes(1));
+  digitalResult = await call("digitalSettings", {
+    expectedRevision: current.revision,
+    hidePost: "does-not-exist",
+  });
+  assert.equal(digitalResult.ok, false);
   console.log(
     "PASS: backend handlers with isolated database double: idempotent migration, preserved legacy state, reviewed funding, stale-command guard, global pause, bounded advance, linked chat/ledger, unsupported command no-op, checkpoint confirmation/restore timelines, and non-duplicating catch-up.",
   );

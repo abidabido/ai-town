@@ -20,6 +20,7 @@ export function recordMemories(state: LivingState, events: LifeEvent[]): void {
     "family-rule-engine",
     "research-rule-engine",
     "observer-presence-rule-engine",
+    "digital-rule-engine",
   ]);
   const eligible = events.filter(
     (e) =>

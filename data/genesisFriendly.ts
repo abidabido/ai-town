@@ -154,6 +154,15 @@ export function friendlyIntent(input: string): {
 
 export const eventKindLabel = (kind: string) =>
   ({
+    DigitalControl: "Phone preferences",
+    DigitalMessage: "A private text",
+    DigitalRead: "A text was read",
+    DigitalMeetup: "Plans became a meetup",
+    DigitalMissed: "A change of plans",
+    DigitalKnowledge: "A public report was read",
+    WhisperPost: "A new WHISPER post",
+    WhisperComment: "A reply on WHISPER",
+    WhisperReaction: "A WHISPER reaction",
     ObserverControl: "Your visit",
     ObserverNotice: "An unusual encounter",
     ObserverEncounter: "Who noticed",
