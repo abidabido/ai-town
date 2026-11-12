@@ -14,6 +14,7 @@ Statuses: NOT STARTED, IN PROGRESS, IMPLEMENTED, VERIFIED, BLOCKED.
 | Hobbies | IMPLEMENTED | Stored, editable and included in social partner scoring; recreation/skill progression pending. |
 | Conversation history | VERIFIED | Saved encounter messages; template source is explicit. No generated reasoning implied. |
 | Trust and friendships | VERIFIED | Rules alter saved trust; core tests link actions and conversations. Romance absent. |
+| Adult dating / marriage / separation | VERIFIED | Seeded rule tests passed; live backend persisted family metadata and browser archive rendered. No live couple formed during the one-day check. |
 | Procreation | NOT STARTED | Must pass adult eligibility, simulated reciprocal consent, resource checks, child creation and restart consistency. |
 | Aging | IN PROGRESS | Numeric calendar age exists; child stages, aging toggle and mortality absent. |
 | Family trees | NOT STARTED | No parent-child graph yet. Do not invent family records. |

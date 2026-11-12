@@ -1,3 +1,7 @@
+
+# Latest family milestone
+Adult partnership rules and their read-only archive are implemented and tested in genesis/family-foundation-20261112. Run node scripts/verify-genesis-families.cjs in addition to existing suites. Families are stored in life.families and checkpointed with world state. Births remain disabled. Prioritize child-safe daily actions before population growth; do not recreate completed partnership logic. The following original birth and generation acceptance criteria remain outstanding.
+
 # Next steps — continue without restarting
 
 1. Family engine — NOT STARTED. Relevant: data/genesisLife.ts, genesisProfiles.ts, convex/genesis.ts; new data/genesisFamilies.ts and tests recommended. First add optional versioned family state and a recoverable checkpoint. Model reciprocal adult willingness, stable partnerships, marriage and bounded child decisions. Parent links must be acyclic and reciprocal. No adult romance involving minors or relatives. Acceptance: eligible consenting simulated adults can form a family and produce a child through rules; invalid/minor/related/unwilling cases rejected; zero minted money; original state immutable; family survives reload.
