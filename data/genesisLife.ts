@@ -2129,7 +2129,7 @@ export function configureDigital(
 export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
   const s = out.state,
     d = s.life.digital;
-  if (!d?.enabled || s.tick % 4 !== 3 || d.lastTick === s.tick) return [];
+  if (!d || s.tick % 4 !== 3 || d.lastTick === s.tick) return [];
   d.lastTick = s.tick;
   const used = new Set(reserved),
     own = new Set<number>(),
@@ -2159,8 +2159,10 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
     (m) => m.status === "accepted" && m.start <= s.tick,
   )) {
     if (
-      available(m.organizer) &&
-      available(m.guest) &&
+      !used.has(m.organizer) &&
+      digitalReady(s, m.organizer) &&
+      !used.has(m.guest) &&
+      digitalReady(s, m.guest) &&
       !digitalBlocked(s, m.organizer, m.guest)
     ) {
       move(s, m.organizer, m.location, -2);
@@ -2208,6 +2210,7 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
       );
     }
   }
+  if (!d.enabled) return [...own];
   const order = [
     ...s.citizens.slice(s.tick % s.citizens.length),
     ...s.citizens.slice(0, s.tick % s.citizens.length),
@@ -2224,6 +2227,9 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
       (m) =>
         m.to === c.id &&
         m.kind === "invite" &&
+        d.meetings.some(
+          (plan) => plan.id === m.meeting && plan.status === "invited",
+        ) &&
         m.tick < s.tick &&
         m.readTick === undefined &&
         !digitalBlocked(s, m.from, m.to),
@@ -2240,14 +2246,15 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
           "Read receipt for " + invitation.id,
         );
         const accepted =
+          meeting.start > s.tick &&
           socialTrust(s, c.id, invitation.from) >= 0 &&
           (p.loneliness >= 20 || (traits.Sociability ?? 50) >= 45);
         meeting.status = accepted ? "accepted" : "declined";
-        if (accepted) meeting.start = s.tick + 4;
+        // The invited date stays fixed. Late answers do not move another citizen’s calendar.
         const body = accepted
           ? "Yes. Let’s meet at " +
             meeting.location +
-            " tomorrow evening and talk about " +
+            " at the planned time to talk about " +
             meeting.topic +
             "."
           : "Thanks for asking. I’m keeping tomorrow evening to myself.";
@@ -2278,7 +2285,26 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
           kind: "reply",
           meeting: meeting.id,
         });
-        if (accepted) socialDelta(s, c.id, invitation.from, 1);
+        if (accepted) {
+          socialDelta(s, c.id, invitation.from, 1);
+          digitalRecord(
+            out,
+            "DigitalPlan",
+            [c.id, invitation.from],
+            "Both participants received a calendar update: their " +
+              meeting.topic +
+              " meetup at " +
+              meeting.location +
+              " is agreed for simulated day " +
+              (Math.floor(meeting.start / 4) + 1) +
+              " at 18:00.",
+            "Shared calendar delivery after acceptance " +
+              id +
+              " of invitation " +
+              invitation.id +
+              "; both know the fixed plan even if a text reply is still unread",
+          );
+        }
         consume(c.id, "Texting a reply");
         phoneActions++;
         continue;
@@ -2311,7 +2337,10 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
       ) >>>
         0) /
       4294967296;
-    const preferText = p.loneliness >= 35 && choice < 0.55;
+    const preferText =
+      (traits.Sociability ?? 50) < 45
+        ? choice < 0.7
+        : p.loneliness >= 25 && choice < 0.55;
     if (post && !preferText && choice < 0.45) {
       const author = s.citizens.find((x) => x.id === post.author);
       if (!author) continue;
@@ -2328,7 +2357,23 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
       const skeptical = (traits.Skepticism ?? 50) >= 65,
         body = skeptical
           ? "Thanks for recording this. What would help us test the explanation?"
-          : "Thanks for sharing what you actually noticed.";
+          : p.curiosity >= 65
+            ? post.topic === "Research"
+              ? "Which question would you test next?"
+              : post.topic === "Something unusual"
+                ? "Could we compare when and where this was noticed?"
+                : "What would you like to try next?"
+            : (traits.Humor ?? 50) >= 65
+              ? "Village life really does keep us busy. What’s next?"
+              : p.empathy >= 65
+                ? "Thanks for taking the time to share this, " +
+                  author.name +
+                  "."
+                : [
+                    "I’ll keep this in mind and leave the conclusion open.",
+                    "Thanks for writing it down. I’d like to hear more.",
+                    "Noted. How did you come to that view?",
+                  ][c.id % 3];
       if ((traits.Sociability ?? 50) >= 45 && post.comments.length < 6) {
         const id = digitalRecord(
           out,
@@ -2448,7 +2493,8 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
         (socialTraits(s, other.id).hobbies.some((h) =>
           profile.hobbies.includes(h),
         ) ||
-          p.loneliness >= 35),
+          p.loneliness >= 35 ||
+          socialTrust(s, c.id, other.id) >= 20),
     );
     if (peer && roll < 0.55) {
       const shared =
@@ -2463,7 +2509,7 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
       const body =
         "Would you like to meet at " +
         location +
-        " tomorrow evening to talk about " +
+        " the evening after tomorrow to talk about " +
         shared.toLowerCase() +
         "?";
       const meeting = "meeting:" + s.life.timeline + ":" + (d.sequence + 1),
@@ -2494,7 +2540,7 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
         guest: peer.id,
         topic: shared.toLowerCase(),
         location,
-        start: s.tick + 4,
+        start: s.tick + 8,
         status: "invited",
         source: id,
       });

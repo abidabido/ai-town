@@ -349,7 +349,12 @@ const count = (t) => [...rows.values()].filter((r) => r.table === t).length;
   );
   assert.ok(current.state.life.digital.posts.some((p) => p.comments.length));
   assert.ok(
-    current.state.life.digital.meetings.some((m) => m.status === "attended"),
+    [...rows.values()].some(
+      (r) =>
+        r.table === "genesisEvents" &&
+        r.doc.kind === "DigitalMeetup" &&
+        r.doc.source === "digital-rule-engine",
+    ),
   );
   const savedDigital = copy(current.state.life.digital);
   const reloadedDigital = await call("current");

@@ -276,3 +276,44 @@ assert.equal(
 console.log(
   "PASS: autonomous two-way texting, scheduled attendance, evidence-based WHISPER post/comment, public knowledge transfer, private selectors/read receipts, needs/reservations, blocking, moderation, adults-only pilot, restart/checkpoint isolation, bounded caches and conserved money",
 );
+
+for (const meetup of events.filter((e) => e.kind === "DigitalMeetup")) {
+  const invitationId = meetup.reason.match(
+    /Scheduled invitation ([^;]+);/,
+  )?.[1];
+  assert.ok(invitationId);
+  assert.ok(
+    events.some(
+      (e) =>
+        e.kind === "DigitalPlan" &&
+        e.tick < meetup.tick &&
+        e.reason.includes("invitation " + invitationId + ";") &&
+        meetup.actors.every((id) => e.actors.includes(id)),
+    ),
+    "Attendees received the shared calendar update before the gathering",
+  );
+}
+const offline = fixture();
+offline.tick = 3;
+offline.life.digital.enabled = false;
+offline.life.digital.profiles[0].phone = false;
+offline.life.digital.profiles[1].phone = false;
+offline.life.digital.meetings = [
+  {
+    id: "fixture-plan",
+    organizer: 0,
+    guest: 1,
+    topic: "astronomy",
+    location: "observatory",
+    start: 3,
+    status: "accepted",
+    source: "fixture-mutually-accepted-invitation",
+  },
+];
+const offlineOut = life.emptyResult(offline);
+life.digitalEvening(offlineOut, []);
+assert.ok(
+  offlineOut.events.some((e) => e.kind === "DigitalMeetup"),
+  "Turning phones off does not erase an already agreed offline meeting",
+);
+assert.ok(!offlineOut.events.some((e) => e.kind === "DigitalMessage"));
