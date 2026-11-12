@@ -219,7 +219,7 @@ export function ChatPanel({
           <div className="eyebrow">
             <span className="live-dot" /> Recorded encounters
           </div>
-          <h2>LIVE VILLAGE CHAT</h2>
+          <h2>THE VILLAGE WHISPER NETWORK</h2>
         </div>
         <span className="badge">Rules templates</span>
       </div>

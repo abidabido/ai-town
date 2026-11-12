@@ -203,6 +203,7 @@ export function upgradeLiving(input: GenesisState): LivingState {
     shortageUntil: 0,
     lightUntil: 0,
   };
+  for(const c of s.citizens) s.life.people[c.id].profile=profileFor(c,s.life.people[c.id]);
   return s;
 }
 export function totalMoney(s: LivingState) {

@@ -320,7 +320,7 @@ export default function Genesis() {
         <header>
           <div className="eyebrow">Civilization observatory · saved world</div>
           <h1>
-            Project Genesis <span>The Living World</span>
+            Project Genesis <span>The Chaos Village</span>
           </h1>
           <div className="notice">
             <strong>Rules-based mode · progress saved.</strong> Dialogue uses
@@ -418,7 +418,7 @@ export default function Genesis() {
                   void send(text);
                 }}
               >
-                <label htmlFor="genesis-command">GENESIS COMMAND CENTER</label>
+                <label htmlFor="genesis-command">GENESIS GOD MODE</label>
                 <div className="command-row">
                   <input
                     id="genesis-command"
