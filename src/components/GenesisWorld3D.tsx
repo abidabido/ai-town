@@ -129,7 +129,7 @@ export default function GenesisWorld3D(props: Props) {
       x: number,
       y: number,
       z: number,
-    ) => mesh(p, new T.BoxGeometry(w, h, d), c, x, y, z);
+    ) => mesh(p, new T.BoxGeometry(w, h, d, w>40?Math.ceil(w/5):1, 1, d>40?Math.ceil(d/5):1), c, x, y, z);
     const terrain = box(scene, 122, 3, 113, "#748765", 0, -1.6, 0);
     terrain.userData.ground = true;
     for (let i = 0; i < 7; i++) {
