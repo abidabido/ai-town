@@ -1,3 +1,15 @@
+const statusLabel = (value: string) =>
+  ({
+    "awaiting-owner-review": "Ready for your review",
+    "approved-not-published": "Approved for future publication",
+    approved: "Approved for future publication",
+    rejected: "Publication declined",
+    ready: "Ready to preview",
+    queued: "Waiting to be built",
+    building: "Being built",
+    failed: "Needs attention",
+    validating: "Checking the files",
+  })[value] ?? value.replaceAll("-", " ");
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -28,7 +40,7 @@ export default function DigitalProducts() {
     Promise.all([
       fetch(root + product.base + "/The_Ultimate_Life_Organizer.pdf").then(
         (r) => {
-          if (!r.ok) throw Error("Planner file is unavailable");
+          if (!r.ok) throw Error("The planner file isn’t available right now.");
           return r.arrayBuffer();
         },
       ),
@@ -37,13 +49,17 @@ export default function DigitalProducts() {
     ])
       .then(async ([bytes, preview, bundle]) => {
         if (!preview.ok || !bundle.ok)
-          throw Error("Product preview or package is unavailable");
+          throw Error(
+            "The preview or download package isn’t available right now.",
+          );
         const digest = await crypto.subtle.digest("SHA-256", bytes),
           hash = Array.from(new Uint8Array(digest))
             .map((x) => x.toString(16).padStart(2, "0"))
             .join("");
         if (hash !== product.sha)
-          throw Error("Artifact hash does not match the validated revision");
+          throw Error(
+            "This file doesn’t match the checked version. Downloads are paused until it is fixed.",
+          );
         if (alive) setAvailableFor(product._id);
       })
       .catch((e) => {
@@ -64,19 +80,21 @@ export default function DigitalProducts() {
       }}
     >
       <span className="eyebrow">PRODUCTS BEFORE PROFIT</span>
-      <h2>Actual digital products</h2>
+      <h2>Your downloadable products</h2>
       <p>
-        Files first. Every completed revision must pass PDF opening, all-page
-        rendering and file-integrity checks. Nothing is publicly published.
+        Preview and download the files below. Products are checked before they
+        are marked ready. Nothing has been published.
       </p>
       {products === undefined ? (
-        <p role="status">Loading product records…</p>
+        <p role="status">Gathering your products…</p>
       ) : !p ? (
-        <p>No validated products registered yet.</p>
+        <p>
+          No finished products yet. Completed, checked files will appear here.
+        </p>
       ) : (
         <>
           <label>
-            Revision history
+            Product versions
             <select
               aria-label="Product revision"
               value={p._id}
@@ -87,7 +105,7 @@ export default function DigitalProducts() {
             >
               {products.map((r) => (
                 <option key={r._id} value={r._id}>
-                  {r.title} · revision {r.revision} · {r.status}
+                  {r.title} · revision {r.revision} · {statusLabel(r.status)}
                 </option>
               ))}
             </select>
@@ -95,14 +113,12 @@ export default function DigitalProducts() {
           <h3>{p.title}</h3>
           <p>
             <strong>
-              REVISION {p.revision} · {p.status}
+              Version {p.revision} · {statusLabel(p.status)}
             </strong>
           </p>
           <p>{p.description}</p>
           {artifactValid && !valid && (
-            <p role="status">
-              {artifactError || "Checking actual product files…"}
-            </p>
+            <p role="status">{artifactError || "Checking your downloads…"}</p>
           )}
           {valid && (
             <>
@@ -121,7 +137,7 @@ export default function DigitalProducts() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Preview sample PDF
+                  Preview the planner
                 </a>{" "}
                 ·{" "}
                 <a href={href("The_Ultimate_Life_Organizer.pdf")} download>
@@ -129,7 +145,7 @@ export default function DigitalProducts() {
                 </a>{" "}
                 ·{" "}
                 <a href={href("Product_Package.zip")} download>
-                  Download complete product package
+                  Download the full package
                 </a>
               </p>
               <label>
@@ -161,7 +177,7 @@ export default function DigitalProducts() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Read draft listing and proposed costs
+                  Read the draft description and price ideas
                 </a>{" "}
                 ·{" "}
                 <a
@@ -169,29 +185,31 @@ export default function DigitalProducts() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Inspect artifact manifest
+                  File checklist and technical details
                 </a>
               </p>
             </>
           )}
-          <h3>Actual work log</h3>
-          <p>
-            Sage, Nova and Theo are assigned roles. The entries below record
-            tool execution, not invented autonomous citizen labor.
-          </p>
-          <div className="studio-log">
-            {p.logs.map((l, i) => (
-              <p key={i}>
-                <strong>{l.role}</strong> · {l.tool} ·{" "}
-                {new Date(l.at).toLocaleString()}
-                <br />
-                {l.text}
-              </p>
-            ))}
-          </div>
+          <details>
+            <summary>How this product was made</summary>
+            <p>
+              Sage, Nova and Theo are assigned roles. The entries below record
+              tool execution, not invented autonomous citizen labor.
+            </p>
+            <div className="studio-log">
+              {p.logs.map((l, i) => (
+                <p key={i}>
+                  <strong>{l.role}</strong> · {l.tool} ·{" "}
+                  {new Date(l.at).toLocaleString()}
+                  <br />
+                  {l.text}
+                </p>
+              ))}
+            </div>
+          </details>
           {p.report && (
             <details>
-              <summary>Validation evidence</summary>
+              <summary>File checks and technical details</summary>
               <p>{p.report}</p>
               <code>{p.sha}</code>
             </details>
@@ -200,10 +218,10 @@ export default function DigitalProducts() {
             <>
               <div className="studio-buttons">
                 <button onClick={() => setPending("approve")}>
-                  Review publication approval
+                  Review for publication
                 </button>
                 <button onClick={() => setPending("reject")}>
-                  Reject publication
+                  Keep this version private
                 </button>
               </div>
               {pending && (
@@ -211,7 +229,7 @@ export default function DigitalProducts() {
                   <p>
                     {pending === "approve"
                       ? "Approve this revision for potential publication? No publishing service is connected."
-                      : "Reject publication while retaining the artifact and history?"}
+                      : "Keep this version private while retaining the artifact and history?"}
                   </p>
                   <button onClick={() => setPending(undefined)}>Cancel</button>
                   <button
@@ -222,11 +240,13 @@ export default function DigitalProducts() {
                           decision: pending,
                         });
                         setStatus(
-                          "Review recorded. No public publication occurred.",
+                          "Your decision is saved. The product is still private.",
                         );
                       } catch (e) {
                         setStatus(
-                          e instanceof Error ? e.message : "Review failed",
+                          e instanceof Error
+                            ? e.message
+                            : "Your decision didn’t save. Please try again.",
                         );
                       }
                       setPending(undefined);

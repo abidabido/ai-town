@@ -563,15 +563,7 @@ export function advanceLiving(previous: GenesisState): LifeResult {
             recipient: partner.id,
             location: "council",
             topic,
-            text:
-              topic === "Food security"
-                ? "The pantry has " +
-                  s.supplies +
-                  " servings. Food needs our attention."
-                : "My current outlook is " +
-                  c.faction +
-                  ". I want to compare perspectives.",
-            source: "rule-template",
+            text: conversationLine({id:c.id,tick:s.tick,traits:p.profile?.traits,faction:c.faction,food:topic==="Food security",civil,responding:false,trust:old,hobby:p.profile?.hobbies[0],sharedMemory:!!s.life.memory?.diaries[c.id]?.some(m=>m.kind==="Conversation"&&m.participants.includes(partner.id))}),source: "rule-template",
             visibility: old >= 30 ? "private in-world" : "public",
           },
           {
@@ -582,10 +574,7 @@ export function advanceLiving(previous: GenesisState): LifeResult {
             recipient: c.id,
             location: "council",
             topic,
-            text: civil
-              ? "I am willing to hear you out. We can keep comparing our views."
-              : "We disagree. I am not convinced by this discussion.",
-            source: "rule-template",
+            text: conversationLine({id:partner.id,tick:s.tick,traits:q.profile?.traits,faction:partner.faction,food:topic==="Food security",civil,responding:true,trust:old,hobby:q.profile?.hobbies[0],sharedMemory:!!s.life.memory?.diaries[partner.id]?.some(m=>m.kind==="Conversation"&&m.participants.includes(c.id))}),source: "rule-template",
             visibility: old >= 30 ? "private in-world" : "public",
           },
         );
@@ -805,4 +794,15 @@ export function scenario(previous: GenesisState, kind: string): LifeResult {
     );
   }
   return out;
+}
+export function conversationLine(context:{id:number;tick:number;traits?:Record<string,number>;faction:string;food:boolean;civil:boolean;responding:boolean;trust:number;hobby?:string;sharedMemory:boolean}):string{
+ const t=context.traits??{},n=Math.abs(context.tick+context.id*17),pick=(lines:string[])=>lines[n%lines.length];
+ if(context.responding){if(!context.civil)return (t.Skepticism??0)>=70?'That’s a big leap. What would count as evidence?':(t.Humor??0)>=70?'I’m putting that in the “needs more convincing” pile.':pick(['I don’t see it that way. Can we look at it from another angle?','I hear you, but I’m not convinced.','We disagree on this one. What am I missing?']);
+ return context.sharedMemory&&context.trust>=30?'I’m glad we can keep talking about this, even when we see things differently.':(t.Empathy??0)>=70?'I want to understand your point of view. Tell me a little more.':pick(['That’s a fair question. Let’s think it through.','I’m listening. What makes you see it that way?','We might learn something by comparing notes.']);}
+ if(context.food)return pick(['Have you eaten? Maybe we should talk about keeping everyone fed.','I’d feel better knowing there’s enough food for everyone. What could we do?']);
+ const ideas:Record<string,string>={Materialists:'what can we actually measure here?',Idealists:'how much does our experience shape what we call real?',Skeptics:'what would change your mind about this?',Neuroscientists:'how much of this comes down to the way a mind works?',Mystics:'have we really explained everything we experience?',Empiricists:'could we test the idea before deciding?'};
+ const idea=ideas[context.faction]??'how could we compare our ideas about village life?';
+ const lead=(t.Confidence??50)<35?'I might be wrong, but ':((t.Humor??0)>=70?'Before we solve the entire universe: ':pick(['I’ve been wondering: ','Here’s my question: ','What do you think—']));
+ const hobby=context.hobby&&(t.Sociability??0)>=70?'I could talk about '+context.hobby.toLowerCase()+' for hours. ':'';
+ return hobby+lead+idea;
 }

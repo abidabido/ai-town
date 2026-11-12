@@ -1,3 +1,6 @@
+import { DailyTea, GenesisHelp } from "./GenesisFriendly";
+import { friendlyIntent } from "../../data/genesisFriendly";
+import "./GenesisFriendly.css";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -10,7 +13,7 @@ import {
   type LifeEvent,
 } from "../../data/genesisLife";
 import { factionColors, Portrait } from "./GenesisWorld";
-import GenesisWorld from './GenesisWorld3D';
+import GenesisWorld from "./GenesisWorld3D";
 import {
   CitizenPanel,
   EventList,
@@ -19,9 +22,9 @@ import {
   BuildingPanel,
   stamp,
 } from "./GenesisPanels";
-import FamilyLegacyArchive from './FamilyLegacyArchive';
-import CreationStudio from './CreationStudio';
-import CharacterStudio from './CharacterStudio';
+import FamilyLegacyArchive from "./FamilyLegacyArchive";
+import CreationStudio from "./CreationStudio";
+import CharacterStudio from "./CharacterStudio";
 import "./Genesis.css";
 import "./GenesisLiving.css";
 type Pending = {
@@ -43,6 +46,7 @@ export default function Genesis() {
     api.genesis.history,
     selected === undefined ? {} : { citizen: selected },
   );
+  const allEvents = useQuery(api.genesis.history, {});
   const [search, setSearch] = useState(""),
     [faction, setFaction] = useState(""),
     [follow, setFollow] = useState(false);
@@ -90,6 +94,19 @@ export default function Genesis() {
     if (state?.life.paused) setPlaying(false);
   }, [state?.life.paused]);
   const report = (message: string, error = false) => {
+    if (
+      error &&
+      (message.includes("[CONVEX") ||
+        message.includes("Server Error") ||
+        message.includes("Mutation failed"))
+    )
+      message =
+        "That change didn’t save as expected. Please try again. Any earlier saved progress is kept.";
+    if (message === "Saved.") message = "Your changes have been saved.";
+    if (message.startsWith("Catch-up saved:"))
+      message = "Your village has caught up. The new updates are saved.";
+    if (message.includes("No away time"))
+      message = "There’s no missed time to catch up yet.";
     setFeedback(message);
     setFailed(error);
   };
@@ -119,7 +136,7 @@ export default function Genesis() {
             done / 4 +
             " " +
             (done === 4 ? "day" : "days") +
-            ". All decisions and transactions saved.",
+            ". Your village progress is saved.",
         );
     } catch (e) {
       setPlaying(false);
@@ -147,10 +164,111 @@ export default function Genesis() {
     y?: number,
   ) => {
     if (lock.current || !state) return;
-    const value = input.trim();
+    let value = input.trim();
     if (!value) return;
     setPlaying(false);
     setPending(undefined);
+    const intent = friendlyIntent(value);
+    const go = (id: string) =>
+      document
+        .getElementById(id)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (intent.kind === "citizen") {
+      const person = state.citizens.find(
+        (c) => c.name.toLowerCase() === intent.name,
+      );
+      if (!person) {
+        report(
+          "We couldn’t find that villager. Try their name from The People.",
+          true,
+        );
+        return;
+      }
+      setSelected(person.id);
+      setBuilding(undefined);
+      requestAnimationFrame(() => go("genesis-inspector"));
+      report("Here’s " + person.name + "’s profile.");
+      return;
+    }
+    if (intent.kind === "people") {
+      go("genesis-people");
+      report(
+        "Here’s what everyone’s doing. Choose a villager to get to know them.",
+      );
+      return;
+    }
+    if (intent.kind === "couples" || intent.kind === "families") {
+      go("genesis-families");
+      report(
+        intent.kind === "families"
+          ? "Dating and marriage are working. Babies, adoption and family trees are still on the way."
+          : "Here are the village’s recorded relationships.",
+      );
+      return;
+    }
+    if (intent.kind === "rivals") {
+      const pairs = Object.entries(state.trust)
+        .filter(([, n]) => n <= -20)
+        .map(([key]) =>
+          key
+            .split(":")
+            .map(
+              (id) =>
+                state.citizens.find((c) => c.id === Number(id))?.name ??
+                "a former villager",
+            )
+            .join(" and "),
+        );
+      report(
+        pairs.length
+          ? "Strained relationships: " +
+              pairs.join("; ") +
+              ". Open a profile for their recent experiences."
+          : "No strongly strained relationships are recorded right now. Smaller disagreements can still happen.",
+      );
+      return;
+    }
+    if (intent.kind === "today") {
+      document.getElementById("genesis-tea-today")?.click();
+      setHistoryDays(1);
+      setSelected(undefined);
+      setBuilding(undefined);
+      go("genesis-news");
+      report(
+        "Today’s saved news is in The Daily Tea. Village History has the recent event list.",
+      );
+      return;
+    }
+    if (intent.kind === "talk") {
+      go("genesis-talk");
+      report(
+        "Here are the latest saved conversations. Rumor tracking is still being developed.",
+      );
+      return;
+    }
+    if (intent.kind === "observer-beliefs") {
+      report(
+        "Beliefs about the Observer aren’t tracked yet. You can see each villager’s current outlook in their profile.",
+        true,
+      );
+      return;
+    }
+    if (intent.kind === "weather-unavailable") {
+      report(
+        "Choosing the weather isn’t ready yet. Weather changes with village time. You can introduce a mysterious light instead—with confirmation.",
+        true,
+      );
+      return;
+    }
+    if (intent.kind === "create") {
+      go("genesis-people");
+      document.getElementById("genesis-create-citizen")?.click();
+      report(
+        "Choose your new villager’s details, then save when you’re ready.",
+      );
+      return;
+    }
+    if (intent.text) value = intent.text;
     const observation = value.toLowerCase().replace(/[.!?]+$/, "");
     const match = observation.match(
       /^show(?: me)? ([a-z]+)(?:'s|’s)? (?:relationships|profile|memories)$/,
@@ -173,7 +291,7 @@ export default function Genesis() {
         .getElementById("genesis-observer")
         ?.scrollIntoView({ behavior: "smooth" });
       report(
-        "Household cash balances are sorted wealthiest first in Observer dashboard. No state changed.",
+        "Households are listed from most to least savings in Village Money.",
       );
       return;
     }
@@ -194,9 +312,7 @@ export default function Genesis() {
       setHistoryDays(Math.min(365, Number(days[1])));
       setSelected(undefined);
       setBuilding(undefined);
-      report(
-        "Showing the latest recorded events within that period, up to 100. No state changed.",
-      );
+      report("Here are the saved updates from that period.");
       return;
     }
     if (
@@ -209,7 +325,7 @@ export default function Genesis() {
           text: value,
           month: true,
           message:
-            "Advance 30 simulated days in three bounded batches? A checkpoint will be saved first.",
+            "Move village life ahead by 30 days? We’ll save a point you can return to first.",
         });
         return;
       }
@@ -230,7 +346,7 @@ export default function Genesis() {
       });
       if ("pending" in result && result.pending) {
         setPending({ text: value, x, y, message: result.message });
-        report("Pending confirmation. Nothing has changed yet.");
+        report("Take a look, then confirm if you’re happy with this change.");
       } else {
         report(result.message, !result.ok);
         if (result.ok) {
@@ -261,7 +377,7 @@ export default function Genesis() {
     try {
       const id = await save({ label: "Manual save · " + stamp(state.tick) });
       setSaveId(id);
-      report("Checkpoint saved.");
+      report("Your village save point is ready.");
     } catch (e) {
       report(String(e), true);
     } finally {
@@ -283,7 +399,7 @@ export default function Genesis() {
         setSelected(undefined);
         setBuilding(undefined);
         report(
-          "Checkpoint restored into a new timeline; a before-restore checkpoint was saved.",
+          "Your village is back at that saved moment. The village you left has a save point too.",
         );
       } catch (e) {
         report(String(e), true);
@@ -324,18 +440,19 @@ export default function Genesis() {
             Project Genesis <span>The Awakening</span>
           </h1>
           <div className="notice">
-            <strong>Rules-based mode · progress saved.</strong> Dialogue uses
-            labeled templates. Autoplay runs while open; catch-up is available
-            when you return.
+            <strong>Your village saves as you go.</strong> Press Play village to
+            watch life unfold.{" "}
+            <a href="#genesis-help">New here? Start with the quick guide.</a>
           </div>
         </header>
         {current === undefined ? (
-          <p role="status">Connecting to your saved world…</p>
+          <p role="status">Opening your village…</p>
         ) : !state ? (
           <section className="panel empty">
-            <h2>Begin the Genesis civilization</h2>
+            <h2>Welcome to your village</h2>
             <p className="muted">
-              Twelve adult citizens. Your original AI Town remains preserved.
+              Meet twelve adult villagers and watch their lives unfold. Your
+              original town is kept safe.
             </p>
             <button className="primary" onClick={() => void begin()}>
               Begin Genesis
@@ -343,6 +460,23 @@ export default function Genesis() {
           </section>
         ) : (
           <>
+            <nav className="genesis-nav" aria-label="Village navigation">
+              {[
+                ["My Village", "genesis-village"],
+                ["The People", "genesis-people"],
+                ["Love & Families", "genesis-families"],
+                ["Town Talk", "genesis-talk"],
+                ["What’s Happening", "genesis-news"],
+                ["The Observatory", "genesis-command-center"],
+                ["Village History", "genesis-history"],
+                ["How Genesis Works", "genesis-help"],
+                ["Creation Studio", "genesis-creation-studio"],
+              ].map(([name, id]) => (
+                <a key={id} href={"#" + id}>
+                  {name}
+                </a>
+              ))}
+            </nav>
             {!current.migrated && (
               <section className="notice">
                 <strong>Daily-life update ready.</strong> Your existing world
@@ -365,10 +499,10 @@ export default function Genesis() {
                 disabled={busy}
                 onClick={() => void send(playing ? "pause" : "play")}
               >
-                {playing ? "Pause all" : "Watch civilization"}
+                {playing ? "Pause village" : "Play village"}
               </button>
               <select
-                aria-label="Simulation speed"
+                aria-label="Village speed"
                 value={speed}
                 onChange={(e) => setSpeed(Number(e.target.value))}
               >
@@ -383,7 +517,7 @@ export default function Genesis() {
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
               >
-                Village view
+                Back to my village
               </button>
               <button disabled={busy || playing} onClick={() => void step(4)}>
                 + 1 day
@@ -395,7 +529,7 @@ export default function Genesis() {
                     text: "advance 1 month",
                     month: true,
                     message:
-                      "Advance 30 days in bounded batches? A checkpoint will be saved first.",
+                      "Move village life ahead by 30 days? We’ll save a point you can return to first.",
                   })
                 }
               >
@@ -405,9 +539,15 @@ export default function Genesis() {
                 disabled={busy || playing}
                 onClick={() => void catchUpNow()}
               >
-                Catch up
+                Catch up on village time
               </button>
             </div>
+            <DailyTea
+              key={current.id + ":" + state.life.timeline}
+              state={state}
+              events={allEvents as any}
+              worldId={current.id}
+            />
             <section
               id="genesis-command-center"
               className="panel command-panel"
@@ -428,7 +568,7 @@ export default function Genesis() {
                     list="genesis-suggestions"
                     maxLength={240}
                     autoComplete="off"
-                    placeholder="Build a hospital. Show me Sage's relationships. Advance 10 days."
+                    placeholder="What would you like to do in your village?"
                     disabled={busy}
                   />
                   <button
@@ -436,7 +576,7 @@ export default function Genesis() {
                     type="submit"
                     disabled={busy || !text.trim()}
                   >
-                    {busy ? "Saving…" : "Send command"}
+                    {busy ? "Saving…" : "Let’s do it"}
                   </button>
                 </div>
                 <datalist id="genesis-suggestions">
@@ -447,7 +587,7 @@ export default function Genesis() {
                     "Show the wealthiest households",
                     "Create a food shortage",
                     "Introduce a mysterious light over the village",
-                    "Pause all citizen activities",
+                    "Pause village citizen activities",
                     "Show me what changed in the last 30 days",
                     "Research: compare food yields during rain",
                   ].map((s) => (
@@ -455,14 +595,41 @@ export default function Genesis() {
                   ))}
                 </datalist>
               </form>
+              <div
+                className="command-examples"
+                aria-label="Try a village command"
+              >
+                {[
+                  "What’s everyone doing?",
+                  "Who’s dating?",
+                  "Has anyone had a baby?",
+                  "Who’s fighting?",
+                  "Show me Sage’s personality.",
+                  "What happened today?",
+                  "Create a new citizen.",
+                  "Show me the latest gossip.",
+                  "Advance one week.",
+                ].map((example) => (
+                  <button
+                    disabled={busy}
+                    key={example}
+                    onClick={() => {
+                      setText(example);
+                      void send(example);
+                    }}
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
               <details>
-                <summary>Supported commands & examples</summary>
+                <summary>More things you can ask</summary>
                 <p className="muted">
                   Movement: Mara go to gardens · Meeting: Mara meet Nyra at
                   observatory · Everyone gather at council · Build a hospital ·
                   Create a food shortage · Introduce a mysterious light ·
                   Research: [problem] · Advance 1–10 days · Show me Sage's
-                  relationships · Show the wealthiest households · Pause all
+                  relationships · Show the wealthiest households · Pause village
                   citizen activities.
                 </p>
                 <p className="muted">
@@ -472,7 +639,7 @@ export default function Genesis() {
               </details>
               {pending && (
                 <div className="confirm-box" role="alert">
-                  <strong>Confirm world change</strong>
+                  <strong>Ready to change your village?</strong>
                   <p>{pending.message}</p>
                   <div>
                     <button
@@ -505,38 +672,38 @@ export default function Genesis() {
             </section>
             <div className="stats">
               <div className="stat">
-                <span className="muted">Adult population</span>
+                <span className="muted">Villagers</span>
                 <strong>{state.citizens.length}</strong>
               </div>
               <div className="stat">
-                <span className="muted">Food servings</span>
+                <span className="muted">Meals available</span>
                 <strong>{state.supplies}</strong>
               </div>
               <div className="stat">
-                <span className="muted">Treasury</span>
+                <span className="muted">Village funds</span>
                 <strong>{money(state.life.accounts.treasury)}</strong>
               </div>
               <div className="stat">
-                <span className="muted">Alliances / conflicts</span>
+                <span className="muted">Close friendships / tensions</span>
                 <strong>
                   {Object.values(state.trust).filter((v) => v >= 30).length} /{" "}
                   {Object.values(state.trust).filter((v) => v <= -20).length}
                 </strong>
               </div>
               <div className="stat">
-                <span className="muted">Active construction</span>
+                <span className="muted">Under construction</span>
                 <strong>
                   {state.life.buildings.filter((b) => b.progress < 100).length}
                 </strong>
               </div>
               <div className="stat">
-                <span className="muted">Research observations</span>
+                <span className="muted">Research notes</span>
                 <strong>{state.life.research}</strong>
               </div>
             </div>
             <div className="build-tools">
               <label>
-                Build type{" "}
+                Choose a building{" "}
                 <select
                   aria-label="Building type"
                   value={buildType}
@@ -570,7 +737,7 @@ export default function Genesis() {
             </div>
             <div className="layout">
               <div>
-                <CharacterStudio state={state} selected={selected} revision={current.revision??0} onSelect={setSelected}/><GenesisWorld
+                <GenesisWorld
                   state={state}
                   selected={selected}
                   playing={playing}
@@ -591,40 +758,54 @@ export default function Genesis() {
                     setSelected(undefined);
                   }}
                 />
-                <FamilyLegacyArchive state={state}/><CreationStudio state={state}/><div className="panel roster-panel">
-                  <h2>Citizen directory</h2>
-                  <div className="roster">
-                    {state.citizens.map((c) => (
-                      <button
-                        key={c.id}
-                        className={selected === c.id ? "selected" : ""}
-                        aria-pressed={selected === c.id}
-                        onClick={() => {
-                          setSelected(c.id);
-                          setBuilding(undefined);
-                          if (window.innerWidth < 850)
-                            document
-                              .getElementById("genesis-inspector")
-                              ?.scrollIntoView({ behavior: "smooth" });
-                        }}
-                      >
-                        <Portrait
-                          name={c.name}
-                          color={
-                            factionColors[
-                              state.life.people[c.id].initialFaction
-                            ]
-                          }
-                          size={32}
-                        />
-                        <span>
-                          {c.name}
-                          <small>
-                            {state.life.people[c.id].job} · {c.faction}
-                          </small>
-                        </span>
-                      </button>
-                    ))}
+                <FamilyLegacyArchive state={state} />
+                <div id="genesis-people">
+                  <CharacterStudio
+                    state={state}
+                    selected={selected}
+                    revision={current.revision ?? 0}
+                    onSelect={setSelected}
+                  />
+                  <div className="panel roster-panel">
+                    <h2>The People</h2>
+                    <p>
+                      See what everyone is up to. Choose a name to open their
+                      story.
+                    </p>
+                    <div className="roster">
+                      {state.citizens.map((c) => (
+                        <button
+                          key={c.id}
+                          className={selected === c.id ? "selected" : ""}
+                          aria-pressed={selected === c.id}
+                          onClick={() => {
+                            setSelected(c.id);
+                            setBuilding(undefined);
+                            if (window.innerWidth < 850)
+                              document
+                                .getElementById("genesis-inspector")
+                                ?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                        >
+                          <Portrait
+                            name={c.name}
+                            color={
+                              factionColors[
+                                state.life.people[c.id].initialFaction
+                              ]
+                            }
+                            size={32}
+                          />
+                          <span>
+                            {c.name}
+                            <small>
+                              {state.life.people[c.id].job} ·{" "}
+                              {state.life.people[c.id].activity}
+                            </small>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -644,15 +825,15 @@ export default function Genesis() {
                 ) : (
                   <section className="panel">
                     <div className="section-head">
-                      <h2>World timeline</h2>
+                      <h2>What’s Happening</h2>
                       <button onClick={() => setHistoryDays(0)}>
-                        All recent
+                        Recent updates
                       </button>
                     </div>
                     <p className="muted">
                       {historyDays ? "Last " + historyDays + " days · " : ""}
-                      Latest recorded decisions in this timeline. Select a
-                      citizen to follow their life.
+                      Recent village news. Choose a villager to follow their
+                      story.
                     </p>
                     <EventList
                       events={((events || []) as LifeEvent[]).filter(
@@ -662,8 +843,8 @@ export default function Genesis() {
                       )}
                     />
                     <p className="muted">
-                      Shows up to 100 events among the latest 1,000. Earlier
-                      records remain saved.
+                      Earlier village updates are still saved in Village
+                      History.
                     </p>
                   </section>
                 )}
@@ -684,11 +865,36 @@ export default function Genesis() {
                 <ObserverPanel state={state} ledger={ledger} />
               </div>
             </div>
+            <section id="genesis-history" className="panel">
+              <h2>Village History</h2>
+              <p>
+                Explore the village’s recent saved events. Earlier records
+                remain saved.
+              </p>
+              <EventList
+                events={((allEvents ?? []) as LifeEvent[]).filter(
+                  (e) => !historyDays || e.tick >= state.tick - historyDays * 4,
+                )}
+              />
+              <button onClick={() => setHistoryDays(0)}>
+                Show all recent events
+              </button>
+              <small>
+                Up to 100 updates from the latest 1,000 saved events.
+              </small>
+            </section>
+            <GenesisHelp />
+            <details className="panel">
+              <summary>
+                Creation Studio · products &amp; website projects
+              </summary>
+              <CreationStudio state={state} />
+            </details>
             <section className="panel save-panel">
-              <h2>Save, restore & observation</h2>
+              <h2>Save & revisit your village</h2>
               <div className="toolbar">
                 <button disabled={busy} onClick={() => void checkpoint()}>
-                  Save checkpoint
+                  Save a point in time
                 </button>
                 <select
                   aria-label="Saved checkpoint"
@@ -697,7 +903,7 @@ export default function Genesis() {
                     setSaveId(e.target.value as Id<"genesisCheckpoints">)
                   }
                 >
-                  <option value="">Choose a checkpoint</option>
+                  <option value="">Choose a saved moment</option>
                   {saves?.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.label.includes("Y")
@@ -713,27 +919,34 @@ export default function Genesis() {
                       text: "restore",
                       restore: saveId as Id<"genesisCheckpoints">,
                       message:
-                        "Restore the selected saved state into a new timeline? Current state will be checkpointed first; earlier events remain archived.",
+                        "Return to this saved moment? We’ll save your current village first and keep its earlier history.",
                     })
                   }
                 >
-                  Restore checkpoint
+                  Return to this moment
                 </button>
               </div>
-              <p className="muted">
-                Every accepted action is saved automatically. Manual checkpoints
-                are limited to 50. Catch-up simulates one six-hour step per
-                elapsed real minute, capped at 10 days per request. It runs only
-                when you press Catch up. No language-model calls are made by
-                this engine. Severe survival outcomes are off.
-              </p>
+              <div className="muted">
+                Your progress saves automatically. Keep a save point before a
+                big change, or return to an earlier moment to explore a
+                different future. Catch up only moves time forward when you ask.{" "}
+                <details>
+                  <summary>Time and save details</summary>
+                  <p>
+                    You can keep up to 50 manual save points. Catch up advances
+                    six village hours per real minute away, up to 10 village
+                    days per request. Severe survival outcomes are off. No
+                    connected language model or always-on background simulation
+                    is configured.
+                  </p>
+                </details>
+              </div>
             </section>
           </>
         )}
         <footer>
-          <a href="?view=legacy">Open preserved original AI Town</a> · Private
-          Codespaces frontend · Existing Convex backend · No new paid services
-          enabled
+          <a href="?view=legacy">Visit the original AI Town</a> · Your village
+          is private. <a href="#genesis-help">How Genesis Works</a>
         </footer>
       </div>
     </main>

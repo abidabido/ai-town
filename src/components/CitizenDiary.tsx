@@ -19,14 +19,19 @@ export function CitizenDiary({
     .reverse();
   return (
     <section aria-label="Evidence-linked personal diary">
-      <h3>Personal diary · Living Memory</h3>
+      <h3>My Memories</h3>
       <p className="muted">
-        Recorded participation, not omniscience. Reflection prompts are
-        trait-based templates, not independent reasoning. Up to 240 memories per
-        citizen; a shared storage budget may evict older entries. Original
-        events remain in the event archive. Earlier unlinked memories are not
-        backfilled.
+        Experiences from their life, kept in their diary. Open a memory to see
+        what really happened.
       </p>
+      <details>
+        <summary>About these memories</summary>
+        <p>
+          Only experiences they took part in are included. Reflection questions
+          are written prompts. Older diary copies may be removed to keep the
+          village running smoothly; original events stay saved.
+        </p>
+      </details>
       <label>
         Search this diary
         <input
@@ -44,12 +49,12 @@ export function CitizenDiary({
           <article className="event" key={e.id}>
             <small>
               Y{date.year} · M{date.month} · D{date.day} · {date.hour}:00 ·
-              timeline {e.timeline + 1} · {e.kind} · participated
+              timeline {e.timeline + 1} · {e.kind} · a personal experience
             </small>
             <p>{e.observation}</p>
             <p className="muted">{e.perspective}</p>
             <details>
-              <summary>Inspect source event</summary>
+              <summary>What happened behind this memory?</summary>
               <p>{e.reason}</p>
               <p>
                 Recorded by {e.source}. Participants:{" "}
