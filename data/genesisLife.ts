@@ -1,3 +1,4 @@
+import {evolveFamilies} from './genesisFamilies';
 import {profileFor} from './genesisProfiles';
 import type { GenesisState, GenesisEvent } from "./genesisEngine";
 export const FACTIONS = [
@@ -53,6 +54,7 @@ export type Building = {
   started: number;
 };
 export type LifeState = {
+ families?: import('./genesisFamilies').FamilyState;
   version: 2;
   paused: boolean;
   startedTick: number;
@@ -690,6 +692,7 @@ export function advanceLiving(previous: GenesisState): LifeResult {
     )
   )
     throw Error("Money conservation invariant failed");
+  evolveFamilies(out);
   return out;
 }
 export const BUILDING_TYPES: Record<

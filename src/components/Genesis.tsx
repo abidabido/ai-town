@@ -19,6 +19,7 @@ import {
   BuildingPanel,
   stamp,
 } from "./GenesisPanels";
+import FamilyLegacyArchive from './FamilyLegacyArchive';
 import CreationStudio from './CreationStudio';
 import CharacterStudio from './CharacterStudio';
 import "./Genesis.css";
@@ -590,7 +591,7 @@ export default function Genesis() {
                     setSelected(undefined);
                   }}
                 />
-                <CreationStudio state={state}/><div className="panel roster-panel">
+                <FamilyLegacyArchive state={state}/><CreationStudio state={state}/><div className="panel roster-panel">
                   <h2>Citizen directory</h2>
                   <div className="roster">
                     {state.citizens.map((c) => (

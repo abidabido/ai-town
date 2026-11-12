@@ -13,7 +13,7 @@ for (const file of [
   "data/genesis",
   "data/genesisEngine",
   "data/genesisCommands",
-  "data/genesisLife","data/genesisProfiles",
+  "data/genesisLife","data/genesisProfiles","data/genesisFamilies",
   "convex/genesis",
 ]) {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });

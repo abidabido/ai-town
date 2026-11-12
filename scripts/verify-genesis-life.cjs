@@ -3,7 +3,7 @@ const fs = require("fs"),
   ts = require("typescript"),
   assert = require("assert/strict");
 const dir = fs.mkdtempSync(os.tmpdir() + "/genesis-life-");
-for (const name of ["genesis", "genesisEngine", "genesisLife","genesisProfiles"])
+for (const name of ["genesis", "genesisEngine", "genesisLife","genesisProfiles","genesisFamilies"])
   fs.writeFileSync(
     dir + "/" + name + ".js",
     ts.transpileModule(fs.readFileSync("data/" + name + ".ts", "utf8"), {
