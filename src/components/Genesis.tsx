@@ -9,7 +9,8 @@ import {
   type Building,
   type LifeEvent,
 } from "../../data/genesisLife";
-import GenesisWorld, { factionColors, Portrait } from "./GenesisWorld";
+import { factionColors, Portrait } from "./GenesisWorld";
+import GenesisWorld from './GenesisWorld3D';
 import {
   CitizenPanel,
   EventList,
@@ -18,6 +19,8 @@ import {
   BuildingPanel,
   stamp,
 } from "./GenesisPanels";
+import CreationStudio from './CreationStudio';
+import CharacterStudio from './CharacterStudio';
 import "./Genesis.css";
 import "./GenesisLiving.css";
 type Pending = {
@@ -566,7 +569,7 @@ export default function Genesis() {
             </div>
             <div className="layout">
               <div>
-                <GenesisWorld
+                <CharacterStudio state={state} selected={selected} revision={current.revision??0} onSelect={setSelected}/><GenesisWorld
                   state={state}
                   selected={selected}
                   playing={playing}
@@ -587,7 +590,7 @@ export default function Genesis() {
                     setSelected(undefined);
                   }}
                 />
-                <div className="panel roster-panel">
+                <CreationStudio state={state}/><div className="panel roster-panel">
                   <h2>Citizen directory</h2>
                   <div className="roster">
                     {state.citizens.map((c) => (

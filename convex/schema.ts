@@ -6,6 +6,7 @@ import { conversationId, playerId } from "./aiTown/ids";
 import { engineTables } from "./engine/schema";
 
 export default defineSchema({
+ genesisStudioProjects:defineTable({title:v.string(),brief:v.string(),assignee:v.number(),assigneeName:v.string(),status:v.string(),createdAt:v.number(),updatedAt:v.number(),logs:v.array(v.object({at:v.number(),actor:v.string(),text:v.string()})),artifact:v.optional(v.string()),sha:v.optional(v.string()),testResult:v.optional(v.string())}),
   genesisSessions: defineTable({
     key: v.string(),
     state: v.any(),

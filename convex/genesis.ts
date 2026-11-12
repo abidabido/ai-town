@@ -20,6 +20,9 @@ import {
   BUILDING_TYPES,
   money,
 } from "../data/genesisLife";
+import {saveProfile} from '../data/genesisProfiles';
+export const saveCitizen=mutation({args:{expectedRevision:v.number(),id:v.optional(v.number()),name:v.string(),age:v.number(),job:v.string(),faction:v.string(),goal:v.string(),profile:v.any(),grant:v.number()},handler:async(ctx,args)=>{const doc=await load(ctx);if(!doc)return{ok:false,message:'Start the saved world first.'};if((doc.revision??0)!==args.expectedRevision)return{ok:false,message:'The world changed while editing. Review your values and save again.'};try{const out=saveProfile(upgradeLiving(doc.state),args);for(const e of out.events)e.actionId+=':'+args.expectedRevision;for(const t of out.transactions)t.actionId+=':'+args.expectedRevision;await persist(ctx,doc,out);return{ok:true,message:'Citizen saved.',citizenId:out.events[0].actors[0]};}catch(error){return{ok:false,message:error instanceof Error?error.message:'Invalid citizen profile.'};}}});
+
 const load = (ctx: { db: DatabaseReader }) =>
   ctx.db
     .query("genesisSessions")

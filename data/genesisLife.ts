@@ -1,3 +1,4 @@
+import {profileFor} from './genesisProfiles';
 import type { GenesisState, GenesisEvent } from "./genesisEngine";
 export const FACTIONS = [
   "Materialists",
@@ -17,6 +18,7 @@ export const PLACES: Record<string, { x: number; y: number }> = {
   clinic: { x: 69, y: 76 },
 };
 export type LifePerson = {
+  profile?: import('./genesisProfiles').CitizenProfile;
   ageAtStart: number;
   home: string;
   job: string;
@@ -121,6 +123,7 @@ export function upgradeLiving(input: GenesisState): LivingState {
   const s = clone(input) as LivingState;
   if (s.life) {
     if (s.life.version !== 2) throw Error("Unsupported Genesis save version");
+    for(const c of s.citizens) s.life.people[c.id].profile=profileFor(c,s.life.people[c.id]);
     return s;
   }
   const jobs = [
@@ -503,9 +506,9 @@ export function advanceLiving(previous: GenesisState): LifeResult {
       const partner = candidates.sort(
         (a, b) =>
           (s.trust[key(c.id, b.id)] || 0) +
-          s.life.people[b.id].loneliness * 0.5 -
+          s.life.people[b.id].loneliness * 0.5 + (p.profile?.hobbies.filter(h=>s.life.people[b.id].profile?.hobbies.includes(h)).length??0)*8 -
           ((s.trust[key(c.id, a.id)] || 0) +
-            s.life.people[a.id].loneliness * 0.5),
+            s.life.people[a.id].loneliness * 0.5 + (p.profile?.hobbies.filter(h=>s.life.people[a.id].profile?.hobbies.includes(h)).length??0)*8),
       )[Math.floor(random() * Math.min(3, candidates.length))];
       if (partner) {
         const q = s.life.people[partner.id];
