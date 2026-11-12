@@ -39,6 +39,7 @@ import type * as crons from "../crons.js";
 import type * as engine_abstractGame from "../engine/abstractGame.js";
 import type * as engine_historicalObject from "../engine/historicalObject.js";
 import type * as genesis from "../genesis.js";
+import type * as genesisProducts from "../genesisProducts.js";
 import type * as genesisStudio from "../genesisStudio.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
@@ -94,6 +95,7 @@ declare const fullApi: ApiFromModules<{
   "engine/abstractGame": typeof engine_abstractGame;
   "engine/historicalObject": typeof engine_historicalObject;
   genesis: typeof genesis;
+  genesisProducts: typeof genesisProducts;
   genesisStudio: typeof genesisStudio;
   http: typeof http;
   init: typeof init;

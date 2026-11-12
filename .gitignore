@@ -5,3 +5,7 @@ node_modules
 dist/
 *.tsbuildinfo
 .genesis-runtime/
+
+public/genesis-products/life-organizer/
+
+products/The_Ultimate_Life_Organizer_Package.zip
