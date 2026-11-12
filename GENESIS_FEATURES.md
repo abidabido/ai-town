@@ -1,3 +1,26 @@
+# Current feature status — Connected Civilization · November 12, 2026
+
+Branch genesis/connected-social-20261112; verified code 23fc53b. These statuses supersede older digital-life entries.
+
+| Feature | Status | Acceptance evidence |
+|---|---|---|
+| Milestone 1: two-citizen Messages | VERIFIED | Autonomous live invitation/reply, participant views, read status, refresh persistence; eleven suites pass |
+| Milestone 2: basic WHISPER | VERIFIED | Live Sav post cites original Work event; other citizens comment/react; profile accounts reuse identities |
+| Milestone 3: social consequences | VERIFIED | Actual accepted plans lead to recorded movement/attendance and trust; public reading transfers attributed information |
+| Shared calendar and basic gatherings | VERIFIED (one-on-one) | Fixed proposed date, accepted plan delivered to both; live completed and declined/expired examples |
+| Privacy in citizen decision rules | VERIFIED | Only own threads/public permitted information; private read records excluded from public-post sources; Iris view hides Ada/Vera |
+| Phone settings/blocking/moderation | VERIFIED (tests; activation live) | Revision checks, preference persistence, block guards, hidden post retains source; reports/appeals not started |
+| Social Daily Tea updates | IMPLEMENTED | Genuine digital events use existing recap/history; existing coverage limits remain |
+| Mobile layout | IMPLEMENTED | Responsive columns/wrapping controls; physical Safari/narrow viewport acceptance pending |
+| Milestone 4: new businesses and employees | NOT STARTED | Existing studio preserved; no decorative company roster added |
+| Milestone 5: business-to-product expansion | NOT STARTED | Existing verified artifacts preserved; no new products or claimed sales |
+| Milestone 6: groups and group chats | NOT STARTED | Only one-on-one invitations/gatherings exist |
+| Milestone 7: dating, shopping, reputation | NOT STARTED | Existing adult relationship systems retained; no SPARK or market integration |
+| Followers/communities/rumors/phone props | NOT STARTED | Do not present template comments as general reasoning or fabricated research |
+| Human multi-user authorization | BLOCKED | Requires real authenticated administrator/citizen access model before shared/public use |
+
+---
+
 # Current feature status — Observer Presence · November 12, 2026
 
 Latest verified code 7c05282; branch genesis/observer-presence-20261112. This section supersedes older Observer status.
