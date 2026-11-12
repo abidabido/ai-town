@@ -1,3 +1,19 @@
+# Next work — The Awakening · November 12, 2026
+
+Current branch genesis/awakening-memory-20261112; verified code e08b4d7. This queue supersedes older notes below. Read GENESIS_PROGRESS.md and GENESIS_FEATURES.md first. Preserve existing 13 citizens and private products. Do not restart.
+
+1. Child-safe life stages — NOT STARTED, highest next priority. Files: data/genesisLife.ts, genesisFamilies.ts, genesisProfiles.ts, src/components/GenesisPanels.tsx, GenesisWorld3D.tsx. Dependencies: existing adult family engine. Add explicit aging settings, child education/food/caregiver actions without wages, bounded resource transfers and minor-safe relationship guards. Acceptance: controlled child-to-adult run, no adult romance/work for minors, aging-off stable ages, conserved balances, persistence. Do not enable live births yet.
+2. Birth/adoption and genealogy — NOT STARTED. After child safety: optional adult reciprocal family decisions, population cap, parent graph validation, inherited tendencies, caregiver links. Acceptance: child creation produces consistent acyclic family links after reload/checkpoint restore; disabled setting prevents births; zero minted money and no minor romance.
+3. Living Memory expansion — IN PROGRESS. V1 diaries VERIFIED in data/genesisMemory.ts, convex/genesis.ts, src/components/CitizenDiary.tsx and scripts/verify-genesis-memory.cjs. Preserve actor-only access. Add witness observations vs claims/opinions, provenance and per-citizen bounded retrieval; connect one decision to accessible memory. Acceptance: unknown/private facts never leak, seeded recall affects an action with evidence links, old source events remain unchanged. Future backfill must be explicitly labeled and use actual events, not legacy prose.
+4. Awakening pilot — NOT STARTED. After evidence/knowledge validation, start one citizen with structured self-model and competing hypothesis confidence. Separate world cause from received evidence; test rejection and acceptance under controlled evidence. Reveal control must not write beliefs directly. No autonomous code execution, credentials or self-modification. Acceptance: hypothesis changes reference only accessible evidence and preserve alternative explanations; no consciousness claim.
+5. Director observatory / Observer messages — NOT STARTED. Prerequisite authenticated administrator backend, not merely private frontend. Then implement grounded citizen requests and recorded replies with clear status, limits and safe command catalog. Acceptance: unauthorized writes rejected and unsupported requests never claim success.
+6. Mobile/performance — IN PROGRESS. Actual iOS Safari pan/pinch, citizen selection, editing and low graphics require physical-device validation. Existing WebGL-compatible architecture and projected-mesh fallback must remain working.
+
+Run all seven verification scripts listed in GENESIS_PROGRESS.md and npm run build for relevant code. Check git status and preserve untracked files; commit only intended paths. No paid API, product publication or public port without approval.
+
+---
+# Historical next-step notes
+
 
 # Latest family milestone
 Adult partnership rules and their read-only archive are implemented and tested in genesis/family-foundation-20261112. Run node scripts/verify-genesis-families.cjs in addition to existing suites. Families are stored in life.families and checkpointed with world state. Births remain disabled. Prioritize child-safe daily actions before population growth; do not recreate completed partnership logic. The following original birth and generation acceptance criteria remain outstanding.

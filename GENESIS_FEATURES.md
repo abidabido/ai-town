@@ -1,3 +1,30 @@
+# Current Awakening acceptance results — November 12, 2026
+
+This section supersedes older scope labels below. Code checkpoint e08b4d7, branch genesis/awakening-memory-20261112.
+
+| Feature | Status | Evidence / remaining work |
+|---|---|---|
+| Private launch and existing Convex state | VERIFIED | Existing village loaded; one-day advance saved; reload retained updated state. |
+| Observer identity | VERIFIED | THE OBSERVER · Abby and The Awakening shown in browser. This does not reveal Abby to citizens. |
+| Evidence-linked diary foundation | VERIFIED | Actor-only life.memory state; seven regression suites and build pass; Sage five entries persist after reload; search and source inspection tested. |
+| Trait-based reflection prompts | VERIFIED | Deterministic prompts differ with curiosity/empathy; explicitly templates, not reasoning. |
+| Broader Living Memory engine | IN PROGRESS | Diaries work; witness accounts, rumors, retrieval-driven decisions, forgetting/revision and contradictory beliefs not implemented. |
+| Adult partnerships | VERIFIED | Existing deterministic tests cover dating, marriage, separation and eligibility. No live partnership guaranteed. |
+| Child-safe life stages | NOT STARTED | Required before any live births. |
+| Procreation, adoption, genealogy | NOT STARTED | No births or child records enabled by this session. |
+| Awakening self-models / metacognition | NOT STARTED | Diary prompts do not satisfy this acceptance criterion. |
+| Creator-discovery hypothesis engine | NOT STARTED | No automatic knowledge or forced acceptance of Abby. |
+| Reveal the Designer | NOT STARTED | Admin label only; no revelation action implemented. |
+| Messages to the Observer | NOT STARTED | No fabricated citizen requests. |
+| Director Observatory modes / Forbidden Archive | NOT STARTED | Require backend admin authorization before private secrets. |
+| Rumor Engine / Whisper Web | NOT STARTED | Existing conversation records are not a rumor-propagation model. |
+| Timeline copying / comparison | IN PROGRESS | Existing checkpoint restore creates new timeline; full simultaneous universe comparison not implemented. |
+| iPad/iPhone hardware acceptance | IN PROGRESS | Responsive interface exists; real touch/WebGL performance unverified. |
+| Existing bakery and planner pipeline | VERIFIED | Preserved previous verified artifacts and UI; no public publication. |
+
+---
+# Historical feature records
+
 # Genesis verified feature checklist
 
 Statuses: NOT STARTED, IN PROGRESS, IMPLEMENTED, VERIFIED, BLOCKED.

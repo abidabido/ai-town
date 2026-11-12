@@ -1,3 +1,29 @@
+# Current checkpoint — The Awakening · November 12, 2026
+
+Branch: genesis/awakening-memory-20261112. Latest verified implementation commit: e08b4d7. Baseline inspected: f972939. This section supersedes older status notes retained below.
+
+## Working now
+The private village loads with THE OBSERVER · Abby and The Awakening labels. Preserved all 13 existing adults (12 philosophical founders plus Nova); no population reset. Existing 3D/fallback renderer, character editing, needs, jobs, money, partnerships, conversations, checkpoints, bakery and private planner remain intact.
+
+Living Memory v1 is VERIFIED: data/genesisMemory.ts stores optional life.memory diaries on accepted simulation mutations in convex/genesis.ts. Only known rule-engine/family-rule-engine events with matching timeline and participating IDs are copied. Owner commands and global/nonparticipant events are excluded. Entries retain actionId, source, tick, timeline, participants, observation and reason. Up to 240 entries per citizen are retained with a shared 120,000-character budget (older entries evicted first); source events remain in genesisEvents. No backfill of old unlinked prose memories. UI shows latest 30 matching entries and searches all retained entries. Trait-based reflection prompts are explicitly templates; this is not metacognition or independent language reasoning. No rumor spread, evidence revision or behavior retrieval is implemented yet.
+
+Browser acceptance: recovery checkpoint saved before advancing exactly one day, Y1 M2 D27 18:00 to D28 18:00; Sage showed five linked experiences. Search meal returned one linked meal memory; source inspection showed rule-engine and Sage. Reload and reselection retained five memories. Saved world reads/writes verified on existing Convex development deployment. No authentication, billing or visibility changes. World stays paused unless Watch is started by the user.
+
+## Validation
+All seven suites passed: scripts/verify-genesis.cjs, verify-genesis-commands.cjs, verify-genesis-life.cjs, verify-genesis-backend.cjs, verify-genesis-families.cjs, verify-genesis-products.cjs, verify-genesis-memory.cjs. npm run build passed. convex dev --once succeeded. Backend regression now asserts diary actor membership, underlying event existence and repeat-read persistence. Memory tests cover source restrictions, no owner/global leakage, duplicate prevention within retained history, trait-based prompts, input-event immutability, retention, JSON roundtrip and timeline-copy isolation. git diff --check passed.
+
+## Run and preview
+Repository: https://github.com/abidabido/ai-town
+Codespace: redesigned-dollop-vgq5599rxw6hjpr
+Private preview: https://redesigned-dollop-vgq5599rxw6hjpr-5173.app.github.dev/ai-town
+In /workspaces/ai-town run npm run dev:frontend (existing Vite 0.0.0.0:5173, port Private). Codespaces may sleep; no always-on service is configured. Existing Convex deployment is already updated. Environment names only: CONVEX_DEPLOYMENT, VITE_CONVEX_URL. Preserve existing values; do not reinitialize the backend.
+
+## Known limits / next task
+Births, children, pregnancy, adoption and full aging controls remain NOT STARTED. Adult dating/marriage/separation already exist; do not duplicate. Next priority: child-safe needs, education, caregiver resources and age-appropriate actions in isolated tests before enabling births. Memory follow-up: explicit witness/claim provenance and bounded retrieval influencing one verified decision rule. Awakening protocol, self-models, creator hypotheses, Reveal the Designer and Messages to the Observer remain NOT STARTED. Admin-only secrets require real backend authorization first. WebGL hardware and actual iPad touch performance remain unverified; cloud browser uses projected-mesh compatibility renderer. No new paid model or public deployment. Private product assets remain gitignored; preserve Library recovery instructions below. Pre-existing untracked convex/README.md and failed bakery artifacts were left untouched.
+
+---
+# Historical checkpoint notes (older scope and statuses)
+
 # Project Genesis progress
 
 Current scope: THE CHAOS VILLAGE. Real-world business development is deferred; existing bakery files and studio code remain preserved.
