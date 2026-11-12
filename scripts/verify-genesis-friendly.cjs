@@ -93,7 +93,7 @@ let oldState = oldLife.upgradeLiving(initial),
   different = 0;
 for (let i = 0; i < 80; i++) {
   const a = oldLife.advanceLiving(oldState),
-    b = newLife.advanceLiving(newState);
+    b = newLife.advanceLiving(newState, {inquiry:false});
   assert.deepEqual(b.state, a.state);
   assert.deepEqual(b.events, a.events);
   assert.deepEqual(b.transactions, a.transactions);
@@ -146,3 +146,5 @@ assert.doesNotMatch(
 console.log(
   "PASS: truthful formatting, visit cursor, quiet/first-visit recaps, friendly commands, personality and memory-grounded dialogue. 80 baseline steps preserve state, events, balances and metadata; only spoken text changes.",
 );
+
+assert.equal(ui.friendlyIntent("What’s everyone researching?").kind,"research");assert.equal(ui.friendlyIntent("Open the investigation board.").kind,"research");assert.equal(ui.friendlyIntent("Show the Daily Tea.").kind,"today");

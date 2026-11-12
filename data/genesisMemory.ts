@@ -15,7 +15,11 @@ export type DiaryEntry = {
 export type MemoryState = { version: 1; diaries: Record<string, DiaryEntry[]> };
 // Actor-only access: world events and owner commands are not automatically citizen knowledge.
 export function recordMemories(state: LivingState, events: LifeEvent[]): void {
-  const allowed = new Set(["rule-engine", "family-rule-engine"]);
+  const allowed = new Set([
+    "rule-engine",
+    "family-rule-engine",
+    "research-rule-engine",
+  ]);
   const eligible = events.filter(
     (e) =>
       allowed.has(e.source) &&

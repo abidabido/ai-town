@@ -1,3 +1,4 @@
+import { eventKindLabel } from "../../data/genesisFriendly";
 import {
   readableEvent,
   relationshipLabel,
@@ -226,6 +227,23 @@ export function CitizenPanel({
           </p>
         ))}
       </details>
+      <h3>What I’m Investigating</h3>
+      {(state.life.inquiry?.projects ?? [])
+        .filter((p) => p.owner === id || p.peer === id)
+        .map((p) => (
+          <div key={p.id}>
+            <p>{p.question}</p>
+            <p>
+              {p.stage === "concluded"
+                ? "A finding is saved."
+                : "Still exploring the evidence."}
+            </p>
+            <a href="#genesis-research">Open this investigation</a>
+          </div>
+        ))}
+      {!(state.life.inquiry?.projects ?? []).some(
+        (p) => p.owner === id || p.peer === id,
+      ) && <p>No personal investigation is recorded yet.</p>}
       <CitizenDiary state={state} id={id} />
       <h3>My Story So Far</h3>
       <EventList events={events.slice(0, 30)} />
@@ -247,7 +265,7 @@ export function EventList({ events }: { events: LifeEvent[] }) {
         events.map((e, i) => (
           <article className="event" key={e.actionId + "-" + i}>
             <small>
-              {stamp(e.tick)} · {e.kind}
+              {stamp(e.tick)} · {eventKindLabel(e.kind)}
             </small>
             <p>{readableEvent(e)}</p>
             {e.reason && (

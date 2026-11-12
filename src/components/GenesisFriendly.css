@@ -135,3 +135,5 @@
 }
 
 .genesis .tea-item > summary, .genesis .chat-message p { font-size: 1rem; line-height: 1.65; }
+
+.research-library input{display:block;width:100%;margin:.5rem 0 1rem}.research-case{border-top:1px solid #65766a;margin-top:1rem;padding-top:1rem}.research-hypotheses{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.research-hypotheses section{background:#263c3b;padding:1rem;border-radius:12px}.research-library table{width:100%;text-align:left}.research-library th,.research-library td{padding:.6rem}.research-library details{margin:.5rem 0}

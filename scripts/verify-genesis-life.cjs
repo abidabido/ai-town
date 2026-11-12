@@ -3,7 +3,13 @@ const fs = require("fs"),
   ts = require("typescript"),
   assert = require("assert/strict");
 const dir = fs.mkdtempSync(os.tmpdir() + "/genesis-life-");
-for (const name of ["genesis", "genesisEngine", "genesisLife","genesisProfiles","genesisFamilies"])
+for (const name of [
+  "genesis",
+  "genesisEngine",
+  "genesisLife",
+  "genesisProfiles",
+  "genesisFamilies",
+])
   fs.writeFileSync(
     dir + "/" + name + ".js",
     ts.transpileModule(fs.readFileSync("data/" + name + ".ts", "utf8"), {
@@ -75,14 +81,20 @@ for (let i = 0; i < 600; i++) {
     assert.equal(m.source, "rule-template");
     assert.ok(
       r.events.some(
-        (e) => e.actionId === m.actionId && e.kind === "Conversation",
+        (e) =>
+          e.actionId === m.actionId &&
+          ["Conversation", "ResearchDiscussion", "ResearchFinding"].includes(
+            e.kind,
+          ) &&
+          e.actors.includes(m.speaker) &&
+          e.actors.includes(m.recipient),
       ),
     );
     assert.notEqual(m.speaker, m.recipient);
     chatCount++;
   }
   workCount += r.events.filter((e) => e.kind === "Work").length;
-  assert.ok(a.citizens.every((c) => c.memories.length <= 60));
+  assert.ok(a.citizens.every((c) => c.memories.length <= 80));
 }
 assert.deepEqual(a, b);
 assert.ok(txCount > 100);

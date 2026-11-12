@@ -142,5 +142,21 @@ export function friendlyIntent(input: string): {
   if (/^(?:advance|skip) (?:one|1) week$/.test(s))
     return { kind: "forward", text: "advance 7 days" };
   if (/^make it rain$/.test(s)) return { kind: "weather-unavailable" };
+  if (
+    /^(?:what's everyone researching|what is everyone researching|show active scientific investigations|open (?:the )?(?:research library|investigation board)|open the oldest unfinished investigation|show (?:which )?theories have been disproven)$/.test(
+      s,
+    )
+  )
+    return { kind: "research" };
+  if (/^(?:show|open) (?:the )?daily tea$/.test(s)) return { kind: "today" };
   return { kind: "forward", text: input };
 }
+
+export const eventKindLabel = (kind: string) =>
+  ({
+    ResearchQuestion: "A new question",
+    ResearchDiscussion: "Comparing explanations",
+    ResearchPlan: "Planning a test",
+    ResearchTest: "An experiment",
+    ResearchFinding: "A research finding",
+  })[kind] ?? kind;

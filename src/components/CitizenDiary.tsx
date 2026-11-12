@@ -1,3 +1,4 @@
+import { eventKindLabel } from "../../data/genesisFriendly";
 import { useState } from "react";
 import type { LivingState } from "../../data/genesisLife";
 import { calendar } from "../../data/genesisLife";
@@ -49,7 +50,8 @@ export function CitizenDiary({
           <article className="event" key={e.id}>
             <small>
               Y{date.year} · M{date.month} · D{date.day} · {date.hour}:00 ·
-              timeline {e.timeline + 1} · {e.kind} · a personal experience
+              timeline {e.timeline + 1} · {eventKindLabel(e.kind)} · a personal
+              experience
             </small>
             <p>{e.observation}</p>
             <p className="muted">{e.perspective}</p>

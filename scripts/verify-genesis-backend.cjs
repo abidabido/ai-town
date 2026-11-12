@@ -74,6 +74,9 @@ const db = {
       async take(n) {
         return list().slice(0, n);
       },
+      async first() {
+        return list()[0] ?? null;
+      },
       async unique() {
         const all = list();
         if (all.length > 1) throw Error("Duplicate unique record");
@@ -183,6 +186,20 @@ const count = (t) => [...rows.values()].filter((r) => r.table === t).length;
     }
   }
   assert.deepEqual((await call("current")).state.life.memory, savedMemory);
+  const originalEvent = (await call("history", {}))[0];
+  assert.equal(
+    (await call("researchEvidence", { actionId: originalEvent.actionId }))
+      .actionId,
+    originalEvent.actionId,
+  );
+  assert.equal(
+    await call("researchEvidence", { actionId: "missing-source" }),
+    null,
+  );
+  assert.equal(
+    await call("researchEvidence", { actionId: "x".repeat(181) }),
+    null,
+  );
   const eventCount = count("genesisEvents");
   const unknown = await call("command", {
     text: "erase everything",

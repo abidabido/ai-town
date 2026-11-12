@@ -1,5 +1,5 @@
-import {evolveFamilies} from './genesisFamilies';
-import {profileFor} from './genesisProfiles';
+import { evolveFamilies } from "./genesisFamilies";
+import { profileFor } from "./genesisProfiles";
 import type { GenesisState, GenesisEvent } from "./genesisEngine";
 export const FACTIONS = [
   "Materialists",
@@ -19,7 +19,7 @@ export const PLACES: Record<string, { x: number; y: number }> = {
   clinic: { x: 69, y: 76 },
 };
 export type LifePerson = {
-  profile?: import('./genesisProfiles').CitizenProfile;
+  profile?: import("./genesisProfiles").CitizenProfile;
   ageAtStart: number;
   home: string;
   job: string;
@@ -54,8 +54,9 @@ export type Building = {
   started: number;
 };
 export type LifeState = {
- memory?: import('./genesisMemory').MemoryState;
- families?: import('./genesisFamilies').FamilyState;
+  inquiry?: InquiryState;
+  memory?: import("./genesisMemory").MemoryState;
+  families?: import("./genesisFamilies").FamilyState;
   version: 2;
   paused: boolean;
   startedTick: number;
@@ -126,7 +127,8 @@ export function upgradeLiving(input: GenesisState): LivingState {
   const s = clone(input) as LivingState;
   if (s.life) {
     if (s.life.version !== 2) throw Error("Unsupported Genesis save version");
-    for(const c of s.citizens) s.life.people[c.id].profile=profileFor(c,s.life.people[c.id]);
+    for (const c of s.citizens)
+      s.life.people[c.id].profile = profileFor(c, s.life.people[c.id]);
     return s;
   }
   const jobs = [
@@ -206,7 +208,8 @@ export function upgradeLiving(input: GenesisState): LivingState {
     shortageUntil: 0,
     lightUntil: 0,
   };
-  for(const c of s.citizens) s.life.people[c.id].profile=profileFor(c,s.life.people[c.id]);
+  for (const c of s.citizens)
+    s.life.people[c.id].profile = profileFor(c, s.life.people[c.id]);
   return s;
 }
 export function totalMoney(s: LivingState) {
@@ -282,7 +285,10 @@ function move(s: LivingState, id: number, location: string, offset = 0) {
 export function emptyResult(s: LivingState): LifeResult {
   return { state: s, events: [], transactions: [], messages: [] };
 }
-export function advanceLiving(previous: GenesisState): LifeResult {
+export function advanceLiving(
+  previous: GenesisState,
+  options: { inquiry?: boolean } = {},
+): LifeResult {
   const s = upgradeLiving(previous),
     out = emptyResult(s);
   s.tick++;
@@ -295,7 +301,8 @@ export function advanceLiving(previous: GenesisState): LifeResult {
     s.life.weather = ["Clear", "Rain", "Overcast", "Clear"][
       Math.floor(random() * 4)
     ];
-  const used = new Set<number>();
+  const researchUsed = options.inquiry === false ? [] : inquiryEvening(out);
+  const used = new Set<number>(researchUsed);
   for (const c of [
     ...s.citizens.slice(s.tick % s.citizens.length),
     ...s.citizens.slice(0, s.tick % s.citizens.length),
@@ -310,6 +317,7 @@ export function advanceLiving(previous: GenesisState): LifeResult {
       85 - p.stress * 0.4 - p.loneliness * 0.25 - p.hunger * 0.2,
     );
     if (p.hunger > 85) p.health = Math.max(25, p.health - 3);
+    if (researchUsed.includes(c.id)) continue;
     if (hour === 0 || p.fatigue >= 85) {
       p.fatigue = clamp(p.fatigue - 55);
       p.activity = "Sleeping";
@@ -429,19 +437,18 @@ export function advanceLiving(previous: GenesisState): LifeResult {
       p.fatigue = clamp(p.fatigue + 12);
       p.skill = clamp(p.skill + 0.2);
       if (p.job === "Farmer") {
-        const yieldAmount =
-          s.life.shortageUntil > s.tick
-            ? 2
-            : (s.life.weather === "Rain" ? 10 : 8) +
-              s.life.buildings.filter(
-                (b) =>
-                  b.type === "farm" && b.progress === 100 && b.condition > 0,
-              ).length *
-                2;
+        const yieldAmount = cropYield(
+          s.life.weather,
+          workingFarms(s),
+          s.life.shortageUntil > s.tick,
+          p.skill,
+        );
         s.supplies += yieldAmount;
         move(s, c.id, "gardens", ((c.id % 4) - 1.5) * 4);
         out.events[out.events.length - 1].text +=
           " Produced " + yieldAmount + " food servings.";
+        if (options.inquiry !== false)
+          observeHarvest(out, c.id, yieldAmount, id);
       } else if (p.job === "Builder") {
         move(s, c.id, "workshop");
         s.life.materials += 2;
@@ -510,9 +517,17 @@ export function advanceLiving(previous: GenesisState): LifeResult {
       const partner = candidates.sort(
         (a, b) =>
           (s.trust[key(c.id, b.id)] || 0) +
-          s.life.people[b.id].loneliness * 0.5 + (p.profile?.hobbies.filter(h=>s.life.people[b.id].profile?.hobbies.includes(h)).length??0)*8 -
+          s.life.people[b.id].loneliness * 0.5 +
+          (p.profile?.hobbies.filter((h) =>
+            s.life.people[b.id].profile?.hobbies.includes(h),
+          ).length ?? 0) *
+            8 -
           ((s.trust[key(c.id, a.id)] || 0) +
-            s.life.people[a.id].loneliness * 0.5 + (p.profile?.hobbies.filter(h=>s.life.people[a.id].profile?.hobbies.includes(h)).length??0)*8),
+            s.life.people[a.id].loneliness * 0.5 +
+            (p.profile?.hobbies.filter((h) =>
+              s.life.people[a.id].profile?.hobbies.includes(h),
+            ).length ?? 0) *
+              8),
       )[Math.floor(random() * Math.min(3, candidates.length))];
       if (partner) {
         const q = s.life.people[partner.id];
@@ -563,7 +578,23 @@ export function advanceLiving(previous: GenesisState): LifeResult {
             recipient: partner.id,
             location: "council",
             topic,
-            text: conversationLine({id:c.id,tick:s.tick,traits:p.profile?.traits,faction:c.faction,food:topic==="Food security",civil,responding:false,trust:old,hobby:p.profile?.hobbies[0],sharedMemory:!!s.life.memory?.diaries[c.id]?.some(m=>m.kind==="Conversation"&&m.participants.includes(partner.id))}),source: "rule-template",
+            text: conversationLine({
+              id: c.id,
+              tick: s.tick,
+              traits: p.profile?.traits,
+              faction: c.faction,
+              food: topic === "Food security",
+              civil,
+              responding: false,
+              trust: old,
+              hobby: p.profile?.hobbies[0],
+              sharedMemory: !!s.life.memory?.diaries[c.id]?.some(
+                (m) =>
+                  m.kind === "Conversation" &&
+                  m.participants.includes(partner.id),
+              ),
+            }),
+            source: "rule-template",
             visibility: old >= 30 ? "private in-world" : "public",
           },
           {
@@ -574,7 +605,22 @@ export function advanceLiving(previous: GenesisState): LifeResult {
             recipient: c.id,
             location: "council",
             topic,
-            text: conversationLine({id:partner.id,tick:s.tick,traits:q.profile?.traits,faction:partner.faction,food:topic==="Food security",civil,responding:true,trust:old,hobby:q.profile?.hobbies[0],sharedMemory:!!s.life.memory?.diaries[partner.id]?.some(m=>m.kind==="Conversation"&&m.participants.includes(c.id))}),source: "rule-template",
+            text: conversationLine({
+              id: partner.id,
+              tick: s.tick,
+              traits: q.profile?.traits,
+              faction: partner.faction,
+              food: topic === "Food security",
+              civil,
+              responding: true,
+              trust: old,
+              hobby: q.profile?.hobbies[0],
+              sharedMemory: !!s.life.memory?.diaries[partner.id]?.some(
+                (m) =>
+                  m.kind === "Conversation" && m.participants.includes(c.id),
+              ),
+            }),
+            source: "rule-template",
             visibility: old >= 30 ? "private in-world" : "public",
           },
         );
@@ -795,14 +841,598 @@ export function scenario(previous: GenesisState, kind: string): LifeResult {
   }
   return out;
 }
-export function conversationLine(context:{id:number;tick:number;traits?:Record<string,number>;faction:string;food:boolean;civil:boolean;responding:boolean;trust:number;hobby?:string;sharedMemory:boolean}):string{
- const t=context.traits??{},n=Math.abs(context.tick+context.id*17),pick=(lines:string[])=>lines[n%lines.length];
- if(context.responding){if(!context.civil)return (t.Skepticism??0)>=70?'That’s a big leap. What would count as evidence?':(t.Humor??0)>=70?'I’m putting that in the “needs more convincing” pile.':pick(['I don’t see it that way. Can we look at it from another angle?','I hear you, but I’m not convinced.','We disagree on this one. What am I missing?']);
- return context.sharedMemory&&context.trust>=30?'I’m glad we can keep talking about this, even when we see things differently.':(t.Empathy??0)>=70?'I want to understand your point of view. Tell me a little more.':pick(['That’s a fair question. Let’s think it through.','I’m listening. What makes you see it that way?','We might learn something by comparing notes.']);}
- if(context.food)return pick(['Have you eaten? Maybe we should talk about keeping everyone fed.','I’d feel better knowing there’s enough food for everyone. What could we do?']);
- const ideas:Record<string,string>={Materialists:'what can we actually measure here?',Idealists:'how much does our experience shape what we call real?',Skeptics:'what would change your mind about this?',Neuroscientists:'how much of this comes down to the way a mind works?',Mystics:'have we really explained everything we experience?',Empiricists:'could we test the idea before deciding?'};
- const idea=ideas[context.faction]??'how could we compare our ideas about village life?';
- const lead=(t.Confidence??50)<35?'I might be wrong, but ':((t.Humor??0)>=70?'Before we solve the entire universe: ':pick(['I’ve been wondering: ','Here’s my question: ','What do you think—']));
- const hobby=context.hobby&&(t.Sociability??0)>=70?'I could talk about '+context.hobby.toLowerCase()+' for hours. ':'';
- return hobby+lead+idea;
+export function conversationLine(context: {
+  id: number;
+  tick: number;
+  traits?: Record<string, number>;
+  faction: string;
+  food: boolean;
+  civil: boolean;
+  responding: boolean;
+  trust: number;
+  hobby?: string;
+  sharedMemory: boolean;
+}): string {
+  const t = context.traits ?? {},
+    n = Math.abs(context.tick + context.id * 17),
+    pick = (lines: string[]) => lines[n % lines.length];
+  if (context.responding) {
+    if (!context.civil)
+      return (t.Skepticism ?? 0) >= 70
+        ? "That’s a big leap. What would count as evidence?"
+        : (t.Humor ?? 0) >= 70
+          ? "I’m putting that in the “needs more convincing” pile."
+          : pick([
+              "I don’t see it that way. Can we look at it from another angle?",
+              "I hear you, but I’m not convinced.",
+              "We disagree on this one. What am I missing?",
+            ]);
+    return context.sharedMemory && context.trust >= 30
+      ? "I’m glad we can keep talking about this, even when we see things differently."
+      : (t.Empathy ?? 0) >= 70
+        ? "I want to understand your point of view. Tell me a little more."
+        : pick([
+            "That’s a fair question. Let’s think it through.",
+            "I’m listening. What makes you see it that way?",
+            "We might learn something by comparing notes.",
+          ]);
+  }
+  if (context.food)
+    return pick([
+      "Have you eaten? Maybe we should talk about keeping everyone fed.",
+      "I’d feel better knowing there’s enough food for everyone. What could we do?",
+    ]);
+  const ideas: Record<string, string> = {
+    Materialists: "what can we actually measure here?",
+    Idealists: "how much does our experience shape what we call real?",
+    Skeptics: "what would change your mind about this?",
+    Neuroscientists: "how much of this comes down to the way a mind works?",
+    Mystics: "have we really explained everything we experience?",
+    Empiricists: "could we test the idea before deciding?",
+  };
+  const idea =
+    ideas[context.faction] ??
+    "how could we compare our ideas about village life?";
+  const lead =
+    (t.Confidence ?? 50) < 35
+      ? "I might be wrong, but "
+      : (t.Humor ?? 0) >= 70
+        ? "Before we solve the entire universe: "
+        : pick([
+            "I’ve been wondering: ",
+            "Here’s my question: ",
+            "What do you think—",
+          ]);
+  const hobby =
+    context.hobby && (t.Sociability ?? 0) >= 70
+      ? "I could talk about " + context.hobby.toLowerCase() + " for hours. "
+      : "";
+  return hobby + lead + idea;
+}
+
+// Curiosity pilot: bounded in-world measurements and a shared production-rule test.
+export type HarvestObservation = {
+  id: string;
+  tick: number;
+  actor: number;
+  weather: string;
+  yield: number;
+  skill: number;
+  farms: number;
+  shortage: boolean;
+};
+export type InquiryTrial = {
+  weather: "Clear" | "Rain";
+  skill: number;
+  farms: number;
+  shortage: false;
+  yield: number;
+  actionId: string;
+};
+export type InquiryProject = {
+  id: string;
+  owner: number;
+  peer?: number;
+  question: string;
+  stage: "question" | "planned" | "tested" | "concluded";
+  started: number;
+  changed: number;
+  observations: HarvestObservation[];
+  questionAction: string;
+  discussionAction?: string;
+  planAction?: string;
+  testAction?: string;
+  findingAction?: string;
+  trials: InquiryTrial[];
+  beliefHistory?: {
+    actor: number;
+    tick: number;
+    weather: number;
+    skill: number;
+    actionId: string;
+  }[];
+  confidence: Record<
+    string,
+    { weather: number; skill: number; evidence: string[] }
+  >;
+  notebook: { tick: number; actionId: string; text: string }[];
+  result?: {
+    weatherEffect: number;
+    skillEffect: number;
+    weatherConfidence: number;
+    skillConfidence: number;
+  };
+};
+export type InquiryState = {
+  version: 1;
+  observations: Record<string, HarvestObservation[]>;
+  projects: InquiryProject[];
+  lastTick: number;
+  lastTimeline: number;
+};
+export function cropYield(
+  weather: string,
+  farms: number,
+  shortage: boolean,
+  skill = 0,
+) {
+  if (
+    !["Clear", "Rain", "Overcast"].includes(weather) ||
+    !Number.isInteger(farms) ||
+    farms < 0 ||
+    farms > 128 ||
+    !Number.isFinite(skill) ||
+    skill < 0 ||
+    skill > 100
+  )
+    throw Error("Invalid crop-model conditions");
+  return shortage ? 2 : (weather === "Rain" ? 10 : 8) + farms * 2;
+}
+export function evaluateInquiryTrials(trials: InquiryTrial[]) {
+  if (trials.length !== 4) throw Error("Four controlled trials are required");
+  const first = trials[0];
+  if (
+    trials.some(
+      (t) =>
+        t.farms !== first.farms ||
+        t.shortage !== false ||
+        !Number.isFinite(t.yield) ||
+        t.yield < 0 ||
+        !t.actionId,
+    ) ||
+    new Set(trials.map((t) => t.weather + ":" + t.skill)).size !== 4
+  )
+    throw Error("The trial conditions are not comparable");
+  for (const weather of ["Clear", "Rain"])
+    for (const skill of [25, 75])
+      if (!trials.some((t) => t.weather === weather && t.skill === skill))
+        throw Error("A planned condition is missing");
+  const mean = (pick: (t: InquiryTrial) => boolean) =>
+    trials.filter(pick).reduce((n, t) => n + t.yield, 0) / 2;
+  const weatherEffect =
+      mean((t) => t.weather === "Rain") - mean((t) => t.weather === "Clear"),
+    skillEffect = mean((t) => t.skill === 75) - mean((t) => t.skill === 25);
+  return {
+    weatherEffect,
+    skillEffect,
+    weatherConfidence: weatherEffect > 0 ? 0.9 : 0.1,
+    skillConfidence: skillEffect > 0 ? 0.9 : 0.1,
+  };
+}
+function inquiryState(s: LivingState): InquiryState {
+  return (s.life.inquiry ??= {
+    version: 1,
+    observations: {},
+    projects: [],
+    lastTick: -1,
+    lastTimeline: s.life.timeline,
+  });
+}
+function workingFarms(s: LivingState) {
+  return s.life.buildings.filter(
+    (b) => b.type === "farm" && b.progress === 100 && b.condition > 0,
+  ).length;
+}
+function observeHarvest(
+  out: LifeResult,
+  id: number,
+  amount: number,
+  source: string,
+) {
+  const s = out.state,
+    r = inquiryState(s),
+    person = s.life.people[id];
+  const observation: HarvestObservation = {
+    id: source,
+    tick: s.tick,
+    actor: id,
+    weather: s.life.weather,
+    yield: amount,
+    skill: person.skill,
+    farms: workingFarms(s),
+    shortage: s.life.shortageUntil > s.tick,
+  };
+  if ((r.observations[id] ?? []).some((o) => o.id === source)) return;
+  r.observations[id] = [...(r.observations[id] ?? []), observation].slice(-12);
+  if (
+    r.projects.length ||
+    person.curiosity < 40 ||
+    person.stress >= 65 ||
+    person.hunger >= 60
+  )
+    return;
+  const prior = r.observations[id]
+    .slice(0, -1)
+    .reverse()
+    .find(
+      (o) =>
+        !o.shortage &&
+        !observation.shortage &&
+        o.farms === observation.farms &&
+        o.weather !== observation.weather &&
+        o.yield !== observation.yield,
+    );
+  const draw = ((Math.imul(id + 1, 1103515245) ^ s.tick ^ s.seed) >>> 0) % 100;
+  if (!prior || draw >= person.curiosity) return;
+  const citizen = s.citizens.find((c) => c.id === id)!;
+  const rainObservation = prior.weather === "Rain" ? prior : observation;
+  const dryObservation = prior.weather === "Rain" ? observation : prior;
+  const initialWeather =
+    rainObservation.yield > dryObservation.yield ? 0.55 : 0.45;
+  const initialSkill =
+    prior.skill === observation.skill
+      ? 0.5
+      : (
+            prior.skill > observation.skill
+              ? prior.yield > observation.yield
+              : observation.yield > prior.yield
+          )
+        ? 0.55
+        : 0.45;
+  const action = event(
+    out,
+    "ResearchQuestion",
+    [id],
+    citizen.name +
+      " noticed that their harvest changed from " +
+      prior.yield +
+      " to " +
+      amount +
+      " servings and asked whether weather or experience explained the difference.",
+    "Two personal harvest observations differed; curiosity outweighed current pressures.",
+    "research-rule-engine",
+  );
+  r.projects.push({
+    id: "harvest:" + s.life.timeline + ":" + s.tick + ":" + id,
+    owner: id,
+    question:
+      "Why do my harvests change: weather, growing experience, or something else?",
+    stage: "question",
+    started: s.tick,
+    changed: s.tick,
+    observations: [{ ...prior }, { ...observation }],
+    questionAction: action,
+    trials: [],
+    beliefHistory: [
+      {
+        actor: id,
+        tick: s.tick,
+        weather: initialWeather,
+        skill: initialSkill,
+        actionId: action,
+      },
+    ],
+    confidence: {
+      [id]: {
+        weather: initialWeather,
+        skill: initialSkill,
+        evidence: [prior.id, observation.id],
+      },
+    },
+    notebook: [
+      {
+        tick: s.tick,
+        actionId: action,
+        text: "A question from two personal harvests. Both weather and experience changed; this is correlation, not a conclusion.",
+      },
+    ],
+  });
+}
+function researchReady(s: LivingState, id: number) {
+  const p = s.life.people[id];
+  return (
+    !!p &&
+    s.citizens.some((c) => c.id === id) &&
+    p.ageAtStart + Math.floor((s.tick - s.life.startedTick) / 1440) >= 18 &&
+    p.hunger + 12 < 45 &&
+    p.fatigue + 15 < 85 &&
+    p.health >= 65 &&
+    p.stress < 65 &&
+    p.loneliness < 70
+  );
+}
+function inquiryEvening(out: LifeResult): number[] {
+  const s = out.state;
+  if (s.tick % 4 !== 3 || !s.life.inquiry) return [];
+  const r = s.life.inquiry;
+  if (r.lastTick === s.tick && r.lastTimeline === s.life.timeline) return [];
+  r.lastTick = s.tick;
+  r.lastTimeline = s.life.timeline;
+  const project = r.projects.find((p) => p.stage !== "concluded");
+  if (!project || s.supplies < 20 || !researchReady(s, project.owner))
+    return [];
+  const name = (id: number) =>
+    s.citizens.find((c) => c.id === id)?.name ?? "A former villager";
+  if (project.stage === "question") {
+    const peer = s.citizens
+      .filter(
+        (c) =>
+          c.id !== project.owner &&
+          researchReady(s, c.id) &&
+          s.life.people[c.id].curiosity >= 40 &&
+          (s.trust[key(project.owner, c.id)] ?? 0) >= 0,
+      )
+      .sort(
+        (a, b) =>
+          s.life.people[b.id].curiosity +
+            s.life.people[b.id].skill -
+            s.life.people[a.id].curiosity -
+            s.life.people[a.id].skill || a.id - b.id,
+      )[0];
+    if (!peer) return [];
+    project.peer = peer.id;
+    const a = project.observations[0],
+      b = project.observations[1],
+      actors = [project.owner, peer.id];
+    for (const id of actors) {
+      move(s, id, "observatory", id === project.owner ? -2 : 2);
+      s.life.people[id].activity = "Comparing harvest explanations";
+      s.life.people[id].fatigue = clamp(s.life.people[id].fatigue + 6);
+      s.life.people[id].loneliness = clamp(s.life.people[id].loneliness - 12);
+    }
+    const discussion = event(
+      out,
+      "ResearchDiscussion",
+      actors,
+      name(project.owner) +
+        " shared two harvest observations with " +
+        name(peer.id) +
+        ". They compared weather with a competing explanation: growing experience.",
+      "An available, curious collaborator listened to the owner’s recorded measurements. No other citizen received these observations.",
+      "research-rule-engine",
+    );
+    project.discussionAction = discussion;
+    project.confidence[peer.id] = {
+      weather: 0.5,
+      skill: 0.5,
+      evidence: [a.id, b.id, discussion],
+    };
+    (project.beliefHistory ??= []).push({
+      actor: peer.id,
+      tick: s.tick,
+      weather: 0.5,
+      skill: 0.5,
+      actionId: discussion,
+    });
+    out.messages.push(
+      {
+        tick: s.tick,
+        timeline: s.life.timeline,
+        actionId: discussion,
+        speaker: project.owner,
+        recipient: peer.id,
+        location: "observatory",
+        topic: "Harvest investigation · correlation and cause",
+        text:
+          "I collected " +
+          a.yield +
+          " servings in " +
+          a.weather.toLowerCase() +
+          " weather and " +
+          b.yield +
+          " in " +
+          b.weather.toLowerCase() +
+          ". " +
+          (a.skill !== b.skill
+            ? "My experience changed too. "
+            : "My recorded experience stayed the same. ") +
+          "Is weather the cause, or am I just getting better?",
+        source: "rule-template",
+        visibility: "public",
+      },
+      {
+        tick: s.tick,
+        timeline: s.life.timeline,
+        actionId: discussion,
+        speaker: peer.id,
+        recipient: project.owner,
+        location: "observatory",
+        topic: "Harvest investigation · competing explanation",
+        text:
+          (a.skill !== b.skill
+            ? "Both things changed, so those harvests alone can’t tell us. "
+            : "Your recorded experience stayed the same, which already challenges a skill-only explanation. ") +
+          "Growing experience is another explanation worth testing. Let’s compare weather and experience separately, with the same number of farms and no shortage.",
+        source: "rule-template",
+        visibility: "public",
+      },
+    );
+    const plan = event(
+      out,
+      "ResearchPlan",
+      actors,
+      name(project.owner) +
+        " and " +
+        name(peer.id) +
+        " planned four controlled crop-model trials: clear or rainy conditions, each at experience 25 and 75.",
+      "A two-factor comparison holds farms and shortage conditions fixed. It is a bounded game-model test, not an external scientific experiment.",
+      "research-rule-engine",
+    );
+    project.planAction = plan;
+    project.stage = "planned";
+    project.changed = s.tick;
+    project.notebook.push(
+      {
+        tick: s.tick,
+        actionId: discussion,
+        text: "Two people discussed two explanations; only the participants gained the shared evidence.",
+      },
+      {
+        tick: s.tick,
+        actionId: plan,
+        text: "Prediction A: rain increases yield at fixed experience. Prediction B: greater experience increases yield at fixed weather. Test both independently. Equipment costs two village materials; no food will be created by virtual trials.",
+      },
+    );
+    return actors;
+  }
+  if (project.peer === undefined || !researchReady(s, project.peer)) return [];
+  const actors = [project.owner, project.peer];
+  if (project.stage === "planned") {
+    if (s.life.materials < 2) return [];
+    const farms = workingFarms(s),
+      trials: InquiryTrial[] = [];
+    for (const weather of ["Clear", "Rain"] as const)
+      for (const skill of [25, 75])
+        trials.push({
+          weather,
+          skill,
+          farms,
+          shortage: false,
+          yield: cropYield(weather, farms, false, skill),
+          actionId: "",
+        });
+    s.life.materials -= 2;
+    for (const id of actors) {
+      move(s, id, "observatory", id === project.owner ? -2 : 2);
+      s.life.people[id].activity = "Running controlled harvest-model tests";
+      s.life.people[id].fatigue = clamp(s.life.people[id].fatigue + 6);
+    }
+    const action = event(
+      out,
+      "ResearchTest",
+      actors,
+      name(project.owner) +
+        " and " +
+        name(project.peer) +
+        " used two materials to run four virtual crop-model trials. " +
+        trials
+          .map(
+            (t) =>
+              t.weather +
+              ", experience " +
+              t.skill +
+              ": " +
+              t.yield +
+              " servings",
+          )
+          .join("; ") +
+        ". Farms held at " +
+        farms +
+        "; shortages off; no food was created.",
+      "The same cropYield function used by real farmer work produced these results. Both participants were available and observed the results.",
+      "research-rule-engine",
+    );
+    for (const trial of trials) trial.actionId = action;
+    project.trials = trials;
+    project.testAction = action;
+    project.stage = "tested";
+    project.changed = s.tick;
+    for (const id of actors) project.confidence[id].evidence.push(action);
+    project.notebook.push({
+      tick: s.tick,
+      actionId: action,
+      text: "Four measurements recorded from the shared game production rule. These test conditions are controlled model runs, not observations of a sudden weather change in the village.",
+    });
+    return actors;
+  }
+  const result = evaluateInquiryTrials(project.trials);
+  project.result = result;
+  for (const id of actors) {
+    move(s, id, "observatory", id === project.owner ? -2 : 2);
+    s.life.people[id].activity = "Reviewing harvest evidence";
+    s.life.people[id].fatigue = clamp(s.life.people[id].fatigue + 6);
+    project.confidence[id] = {
+      weather: result.weatherConfidence,
+      skill: result.skillConfidence,
+      evidence: [...project.confidence[id].evidence],
+    };
+  }
+  const finding = event(
+    out,
+    "ResearchFinding",
+    actors,
+    name(project.owner) +
+      " and " +
+      name(project.peer) +
+      " recorded their finding: rain changed the trial yield by " +
+      result.weatherEffect +
+      " servings; greater experience changed it by " +
+      result.skillEffect +
+      ". They revised their two research beliefs and saved the notebook.",
+    "Confidence follows the recorded contrasts, not charisma or faction. Findings apply to the tested game rule and conditions only.",
+    "research-rule-engine",
+  );
+  project.findingAction = finding;
+  project.stage = "concluded";
+  project.changed = s.tick;
+  for (const id of actors) {
+    project.confidence[id].evidence.push(finding);
+    (project.beliefHistory ??= []).push({
+      actor: id,
+      tick: s.tick,
+      weather: project.confidence[id].weather,
+      skill: project.confidence[id].skill,
+      actionId: finding,
+    });
+  }
+  project.notebook.push({
+    tick: s.tick,
+    actionId: finding,
+    text:
+      "Evidence review: weather confidence " +
+      Math.round(result.weatherConfidence * 100) +
+      "%; experience confidence " +
+      Math.round(result.skillConfidence * 100) +
+      "%. These are bounded model-belief scores, not statistical probabilities or proof about real crops.",
+  });
+  out.messages.push(
+    {
+      tick: s.tick,
+      timeline: s.life.timeline,
+      actionId: finding,
+      speaker: project.peer,
+      recipient: project.owner,
+      location: "observatory",
+      topic: "Harvest investigation · reviewing evidence",
+      text:
+        "Changing experience altered yield by " +
+        result.skillEffect +
+        " in the controlled trials. " +
+        (result.skillEffect > 0
+          ? "That supports an experience effect here."
+          : "I’m lowering my confidence in the experience explanation. The results don’t support it here."),
+      source: "rule-template",
+      visibility: "public",
+    },
+    {
+      tick: s.tick,
+      timeline: s.life.timeline,
+      actionId: finding,
+      speaker: project.owner,
+      recipient: project.peer,
+      location: "observatory",
+      topic: "Harvest investigation · limits of the finding",
+      text:
+        "The rain comparison changed yield by " +
+        result.weatherEffect +
+        ". " +
+        (result.weatherEffect > 0
+          ? "That supports a weather effect in these conditions."
+          : "That doesn’t support our rain prediction here.") +
+        " We should keep the limits of the test with the result.",
+      source: "rule-template",
+      visibility: "public",
+    },
+  );
+  return actors;
 }

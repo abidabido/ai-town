@@ -1,3 +1,4 @@
+import ResearchLibrary from "./ResearchLibrary";
 import { DailyTea, GenesisHelp } from "./GenesisFriendly";
 import { friendlyIntent } from "../../data/genesisFriendly";
 import "./GenesisFriendly.css";
@@ -188,6 +189,13 @@ export default function Genesis() {
       setBuilding(undefined);
       requestAnimationFrame(() => go("genesis-inspector"));
       report("Here’s " + person.name + "’s profile.");
+      return;
+    }
+    if (intent.kind === "research") {
+      go("genesis-research");
+      report(
+        "Here are the village’s saved investigations, predictions and evidence. This first pilot studies harvest patterns.",
+      );
       return;
     }
     if (intent.kind === "people") {
@@ -466,6 +474,7 @@ export default function Genesis() {
                 ["The People", "genesis-people"],
                 ["Love & Families", "genesis-families"],
                 ["Town Talk", "genesis-talk"],
+                ["Research Library", "genesis-research"],
                 ["What’s Happening", "genesis-news"],
                 ["The Observatory", "genesis-command-center"],
                 ["Village History", "genesis-history"],
@@ -600,6 +609,7 @@ export default function Genesis() {
                 aria-label="Try a village command"
               >
                 {[
+                  "What’s everyone researching?",
                   "What’s everyone doing?",
                   "Who’s dating?",
                   "Has anyone had a baby?",
@@ -883,6 +893,7 @@ export default function Genesis() {
                 Up to 100 updates from the latest 1,000 saved events.
               </small>
             </section>
+            <ResearchLibrary state={state} />
             <GenesisHelp />
             <details className="panel">
               <summary>

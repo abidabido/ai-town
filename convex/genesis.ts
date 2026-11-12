@@ -1,4 +1,4 @@
-import {recordMemories} from '../data/genesisMemory';
+import { recordMemories } from "../data/genesisMemory";
 import {
   mutation,
   query,
@@ -21,8 +21,48 @@ import {
   BUILDING_TYPES,
   money,
 } from "../data/genesisLife";
-import {saveProfile} from '../data/genesisProfiles';
-export const saveCitizen=mutation({args:{expectedRevision:v.number(),id:v.optional(v.number()),name:v.string(),age:v.number(),job:v.string(),faction:v.string(),goal:v.string(),profile:v.any(),grant:v.number()},handler:async(ctx,args)=>{const doc=await load(ctx);if(!doc)return{ok:false,message:'Start the saved world first.'};if((doc.revision??0)!==args.expectedRevision)return{ok:false,message:'The world changed while editing. Review your values and save again.'};try{const out=saveProfile(upgradeLiving(doc.state),args);for(const e of out.events)e.actionId+=':'+args.expectedRevision;for(const t of out.transactions)t.actionId+=':'+args.expectedRevision;await persist(ctx,doc,out);return{ok:true,message:'Citizen saved.',citizenId:out.events[0].actors[0]};}catch(error){return{ok:false,message:error instanceof Error?error.message:'Invalid citizen profile.'};}}});
+import { saveProfile } from "../data/genesisProfiles";
+export const saveCitizen = mutation({
+  args: {
+    expectedRevision: v.number(),
+    id: v.optional(v.number()),
+    name: v.string(),
+    age: v.number(),
+    job: v.string(),
+    faction: v.string(),
+    goal: v.string(),
+    profile: v.any(),
+    grant: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const doc = await load(ctx);
+    if (!doc) return { ok: false, message: "Start the saved world first." };
+    if ((doc.revision ?? 0) !== args.expectedRevision)
+      return {
+        ok: false,
+        message:
+          "The world changed while editing. Review your values and save again.",
+      };
+    try {
+      const out = saveProfile(upgradeLiving(doc.state), args);
+      for (const e of out.events) e.actionId += ":" + args.expectedRevision;
+      for (const t of out.transactions)
+        t.actionId += ":" + args.expectedRevision;
+      await persist(ctx, doc, out);
+      return {
+        ok: true,
+        message: "Citizen saved.",
+        citizenId: out.events[0].actors[0],
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "Invalid citizen profile.",
+      };
+    }
+  },
+});
 
 const load = (ctx: { db: DatabaseReader }) =>
   ctx.db
@@ -76,7 +116,7 @@ async function persist(
   doc: Doc<"genesisSessions">,
   out: LifeResult,
 ) {
-  recordMemories(out.state,out.events);
+  recordMemories(out.state, out.events);
   await ctx.db.patch(doc._id, {
     state: out.state,
     revision: (doc.revision ?? 0) + 1,
@@ -509,5 +549,16 @@ export const catchUp = mutation({
       ...saved,
       message: "Catch-up saved: " + steps + " six-hour steps.",
     };
+  },
+});
+
+export const researchEvidence = query({
+  args: { actionId: v.string() },
+  handler: async (ctx, args) => {
+    if (!args.actionId || args.actionId.length > 180) return null;
+    return await ctx.db
+      .query("genesisEvents")
+      .withIndex("action", (q) => q.eq("actionId", args.actionId))
+      .first();
   },
 });
