@@ -1,3 +1,4 @@
+import {CitizenDiary} from './CitizenDiary';
 import { useState } from "react";
 import type {
   LivingState,
@@ -163,7 +164,7 @@ export function CitizenPanel({
           </span>
         ))}
       </div>
-      <h3>Recent decisions & experiences</h3>
+      <CitizenDiary state={state} id={id}/><h3>Recent decisions & experiences</h3>
       <EventList events={events} />
     </section>
   );

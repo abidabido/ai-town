@@ -13,7 +13,10 @@ for (const file of [
   "data/genesis",
   "data/genesisEngine",
   "data/genesisCommands",
-  "data/genesisLife","data/genesisProfiles","data/genesisFamilies",
+  "data/genesisLife",
+  "data/genesisProfiles",
+  "data/genesisFamilies",
+  "data/genesisMemory",
   "convex/genesis",
 ]) {
   fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
@@ -168,6 +171,18 @@ const count = (t) => [...rows.values()].filter((r) => r.table === t).length;
   assert.ok(count("genesisChat") > 0);
   assert.ok((await call("ledger", {})).length > 14);
   current = await call("current");
+  const savedMemory = current.state.life.memory;
+  assert.ok(savedMemory);
+  for (const [id, entries] of Object.entries(savedMemory.diaries)) {
+    assert.ok(entries.length > 0);
+    for (const entry of entries) {
+      assert.ok(entry.participants.includes(Number(id)));
+      assert.ok(
+        (await call("history", {})).some((e) => e.actionId === entry.actionId),
+      );
+    }
+  }
+  assert.deepEqual((await call("current")).state.life.memory, savedMemory);
   const eventCount = count("genesisEvents");
   const unknown = await call("command", {
     text: "erase everything",

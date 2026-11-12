@@ -1,3 +1,4 @@
+import {recordMemories} from '../data/genesisMemory';
 import {
   mutation,
   query,
@@ -75,6 +76,7 @@ async function persist(
   doc: Doc<"genesisSessions">,
   out: LifeResult,
 ) {
+  recordMemories(out.state,out.events);
   await ctx.db.patch(doc._id, {
     state: out.state,
     revision: (doc.revision ?? 0) + 1,

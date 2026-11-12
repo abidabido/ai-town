@@ -54,6 +54,7 @@ export type Building = {
   started: number;
 };
 export type LifeState = {
+ memory?: import('./genesisMemory').MemoryState;
  families?: import('./genesisFamilies').FamilyState;
   version: 2;
   paused: boolean;

@@ -319,9 +319,9 @@ export default function Genesis() {
     <main className="genesis living">
       <div className="top">
         <header>
-          <div className="eyebrow">Civilization observatory · saved world</div>
+          <div className="eyebrow">THE OBSERVER · Abby · saved world</div>
           <h1>
-            Project Genesis <span>The Chaos Village</span>
+            Project Genesis <span>The Awakening</span>
           </h1>
           <div className="notice">
             <strong>Rules-based mode · progress saved.</strong> Dialogue uses
