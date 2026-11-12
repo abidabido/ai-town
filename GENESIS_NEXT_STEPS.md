@@ -1,3 +1,18 @@
+# Next work — Human-friendly Genesis · November 12, 2026
+
+Read the current sections of GENESIS_PROGRESS.md and GENESIS_FEATURES.md first. Branch genesis/human-friendly-20261112; implementation a7d1c20 (core 8990aa8). Preserve 13 existing adults, private planner, bakery, profiles and new navigation. This queue supersedes older priorities below for the current language/UX request.
+
+1. iPad/iPhone UX audit — IN PROGRESS. Files: GenesisFriendly.css, Genesis.tsx, GenesisPanels.tsx, CharacterStudio.tsx, GenesisWorld3D.tsx. Test actual Safari pinch/pan, taps, sticky navigation, keyboard, editor save/cancel, long names and readable chat. Acceptance: no horizontal clipping or unreachable controls on phone/tablet; keep low graphics and truthful fallback status.
+2. Daily Tea pagination/cross-device visits — NOT STARTED. Files: GenesisFriendly.tsx, data/genesisFriendly.ts, convex/genesis.ts. Current visit cursor is browser-local by session/timeline and history is latest 100 among latest 1,000. Add indexed pagination and authenticated per-user cursors with explicit reset behavior. Acceptance: no missed same-tick new events, no cross-timeline leakage, accurate coverage for long absences and quiet visits; never imply background execution.
+3. Richer grounded dialogue — IN PROGRESS. Files: data/genesisLife.ts conversationLine, scripts/verify-genesis-friendly.cjs. Current rules/templates use real encounter, traits, outlook/hobby and prior shared participation; preserve old transcripts. Extend ordinary-life topics only using accessible evidence and record the actual topic. Age/background/communication preferences need careful, non-stereotyped variation. Acceptance: different styles, no private-fact leak or invented activity, no additional state/RNG changes unless explicitly intended and tested.
+4. Remaining language review — IN PROGRESS. Inspect rare server errors, restore warnings, long historical text, detailed studio logs and the optional original AI Town view. Preserve technical originals in optional details. Acceptance: clear errors and accurate unsupported-command feedback; no hidden false success. Core UI and product flows are already rewritten—do not redo them.
+5. Original civilization queue — remains pending. Child-safe life stages before births; source-linked knowledge before creator hypotheses/rumors; real backend administrator authentication before private archives. The previous checkpoints retain exact dependencies. Do not enable or advertise these unfinished controls.
+
+Run all eight scripts/verify-genesis*.cjs suites listed in progress and npm run build after relevant code. The friendly suite compares against commit 12c1315; keep that ancestor available in the clone. No paid APIs, public app/product publication, new financial services or destructive migrations. Preserve pre-existing untracked convex/README.md and failed bakery artifacts; stage only intended files.
+
+---
+# Earlier development queue
+
 # Next work — The Awakening · November 12, 2026
 
 Current branch genesis/awakening-memory-20261112; verified code e08b4d7. This queue supersedes older notes below. Read GENESIS_PROGRESS.md and GENESIS_FEATURES.md first. Preserve existing 13 citizens and private products. Do not restart.

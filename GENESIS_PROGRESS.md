@@ -1,3 +1,33 @@
+# Current checkpoint — Human-friendly Genesis · November 12, 2026
+
+Branch: genesis/human-friendly-20261112. Latest verified implementation: a7d1c20 (core upgrade 8990aa8). Inspected baseline 12c1315; existing untracked files preserved. This section supersedes older scope notes below.
+
+## Completed
+- Clear anchor navigation: My Village, The People, Love & Families, Town Talk, What’s Happening, The Observatory, Village History; plus Help and Creation Studio. All nine destinations verified against live DOM. Original AI Town remains available.
+- Main page, camera help, loading/status wording, citizen editor, families, chat, money and product reviews use plainer language. Build logs, source IDs, file fingerprints, personality/needs/belief/trust scores and graphics information remain available in optional details. Creation Studio is expandable and keeps its actual preview/download/review features.
+- Profiles introduce each person with their real age, job and hobbies. Sections cover activity, wellbeing, personality, hobbies, goals, friends, actual partnership, household, memories and story. Trust descriptions use existing thresholds; housemates are never inferred to be lovers or relatives.
+- The Daily Tea uses real saved events. It offers Today and Since my last visit, ordinary-life counts, quiet states and expandable underlying events. A per-world/per-timeline localStorage visit cursor uses database creation time, so same-tick new events can appear. This is browser-local, not account-synced; only the latest 100 history results are available, with a coverage warning when older unseen news may be missing. It does not generate rumors or run background simulation.
+- Friendly command aliases and nine clickable examples: activity, dating/families, tension, profile/personality, today, create form, saved conversations and one-week advancement. Weather selection and Observer beliefs return honest not-ready explanations. Creation opens a form; it never silently creates a record. Existing validated world-changing commands and confirmation remain.
+- New saved conversation text varies by confidence, humor, empathy, sociability/hobby, current outlook and accessible prior shared diary participation. It is bounded written-pattern dialogue tied to existing meetings and their actual civil/disagreement outcome. No new meetings, facts, decisions, paid inference or historical transcript rewrites.
+- Searchable How Genesis Works covers routines, personality, family limits, time, editing, commands, memory limits, the Observer, conversations, money/products and unfinished controls. Recap and chat reading size verified at 16 px; touch targets and mobile CSS improved.
+
+## Verification
+All eight suites passed: verify-genesis.cjs, verify-genesis-commands.cjs, verify-genesis-life.cjs, verify-genesis-backend.cjs, verify-genesis-families.cjs, verify-genesis-products.cjs, verify-genesis-memory.cjs, verify-genesis-friendly.cjs in scripts/. npm run build passed; convex dev --once succeeded. After final wording polish, friendly/backend tests, build and deploy passed again. Final CSS reading-size change verified in the browser; no simulation logic changed.
+New suite checks truthful formatting, first/quiet/same-tick visit cursor, command classification and aliases, personality/memory-grounded voice, plus 80 deterministic steps against baseline 12c1315. All citizen state, events, balances/transfers and message metadata match baseline; only spoken text differs.
+Browser checks: Sage profile command, create-form open/cancel, help search, Today recap and event expansion, quiet return after reload, unsupported rain with unchanged time, Creation Studio navigation and actual product controls, and all navigation targets. Saved recovery point at Year 1 Month 2 Day 28 18:00, then advanced exactly one day to Day 29 18:00. New lines appeared in saved Town Talk; all 13 existing adults retained. World left paused. No payments, paid model, visibility changes or public deployment.
+
+## Run / preview
+/workspaces/ai-town · npm run dev:frontend · existing private port 5173.
+Private preview: https://redesigned-dollop-vgq5599rxw6hjpr-5173.app.github.dev/ai-town
+Codespace: redesigned-dollop-vgq5599rxw6hjpr. Repository: https://github.com/abidabido/ai-town
+Existing Convex deployment updated. Environment names only: CONVEX_DEPLOYMENT, VITE_CONVEX_URL. No new credentials/dependencies. Codespaces can sleep; no always-on worker is configured. Preserve private planner assets and recovery instructions below.
+
+## Remaining limits
+Real iPad/iPhone touch and WebGL hardware acceptance remains pending. Copy in the separate legacy AI Town view is preserved rather than rewritten. Deep historical/raw technical entries remain verbatim inside details. Dialogue is still bounded templates, not general language-model conversation; age/background vocabulary and richer ordinary-life topics remain future work. Full cross-device visit tracking and paginated older recaps are not implemented. Babies, pregnancy, adoption, rumor spread, creator discovery and advanced experiments remain unfinished and are explicitly described as such in Help. Next priority for this user request: physical-device UX audit and oldest-event pagination, then richer grounded conversation topics without changing simulation outcomes.
+
+---
+# Historical checkpoints
+
 # Current checkpoint — The Awakening · November 12, 2026
 
 Branch: genesis/awakening-memory-20261112. Latest verified implementation commit: e08b4d7. Baseline inspected: f972939. This section supersedes older status notes retained below.

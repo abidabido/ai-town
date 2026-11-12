@@ -1,3 +1,27 @@
+# Human-friendly upgrade acceptance — November 12, 2026
+
+Current branch genesis/human-friendly-20261112, verified code a7d1c20 (core 8990aa8). Latest section overrides older display labels below.
+
+| Feature | Status | Evidence / limits |
+|---|---|---|
+| Main village wording and navigation | VERIFIED | Nine live destinations resolve; main labels and camera help simplified. |
+| Personal citizen profiles | VERIFIED | Sage opens through conversational command; real age/job/hobbies, qualitative needs and trust labels; scores optional. |
+| Love & Families wording | VERIFIED | Actual partnership records only; explicit child-system limits; housemates distinguished from family. |
+| Readable event descriptions | VERIFIED | Pure presentation of saved records; original data retained in details; positive/negative trust and unknown-event tests. |
+| Town Talk | VERIFIED | Saved new personality-based lines appear after one live day; historical messages preserved. |
+| Full individual dialogue model | IN PROGRESS | Written-pattern voice uses some traits/outlook/hobbies/shared memory. Age/background vocabulary and richer topics remain pending. |
+| Conversational commands | VERIFIED | Nine clickable examples plus tested query aliases and one-week forwarding; unsupported weather/Observer beliefs explained honestly. |
+| The Daily Tea | VERIFIED | Real event recap, Today/since-visit modes, event expansion, quiet reload; database-time cursor unit tests. Browser-local/latest-100 limits disclosed. |
+| Cross-device / full-history recaps | NOT STARTED | Requires account-scoped visit state and history pagination. |
+| Searchable help | VERIFIED | Working/future features described; babies search checked live. |
+| Product and studio usability | VERIFIED | Versions/status labels simplified, optional build details, existing downloads/previews/reviews preserved. |
+| Touch-friendly layout/readability | IMPLEMENTED | 44 px targets, responsive navigation, 16 px recap/chat text checked in desktop browser. Physical iOS test pending. |
+| Complete deep/legacy wording audit | IN PROGRESS | Separate original AI Town UI untouched; verbatim technical records kept in details. |
+| Simulation preservation | VERIFIED | 80-step baseline equivalence plus seven existing suites; no paid providers, resets or public exposure. |
+
+---
+# Earlier feature checklists
+
 # Current Awakening acceptance results — November 12, 2026
 
 This section supersedes older scope labels below. Code checkpoint e08b4d7, branch genesis/awakening-memory-20261112.
