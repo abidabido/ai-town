@@ -55,4 +55,14 @@ export function recordMemories(state: LivingState, events: LifeEvent[]): void {
       });
       memory.diaries[id] = diary.slice(-240);
     }
+  // Bound embedded state well below Convex's document limit; source events remain separate.
+  let budget = JSON.stringify(memory).length;
+  while (budget > 120000) {
+    const lists = Object.values(memory.diaries).filter((list) => list.length);
+    const oldest = lists.sort(
+      (a, b) => a[0].tick - b[0].tick || a[0].timeline - b[0].timeline,
+    )[0];
+    if (!oldest) break;
+    budget -= JSON.stringify(oldest.shift()).length;
+  }
 }

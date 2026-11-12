@@ -22,9 +22,10 @@ export function CitizenDiary({
       <h3>Personal diary · Living Memory</h3>
       <p className="muted">
         Recorded participation, not omniscience. Reflection prompts are
-        trait-based templates, not independent reasoning. Latest 240 memories
-        retained; original events remain in the event archive. Earlier unlinked
-        memories are not backfilled.
+        trait-based templates, not independent reasoning. Up to 240 memories per
+        citizen; a shared storage budget may evict older entries. Original
+        events remain in the event archive. Earlier unlinked memories are not
+        backfilled.
       </p>
       <label>
         Search this diary
@@ -34,7 +35,9 @@ export function CitizenDiary({
           onChange={(e) => setSearch(e.target.value)}
         />
       </label>
-      <p>{entries.length} matching memories</p>
+      <p>
+        {entries.length} matching {entries.length === 1 ? "memory" : "memories"}
+      </p>
       {entries.slice(0, 30).map((e) => {
         const date = calendar(e.tick);
         return (

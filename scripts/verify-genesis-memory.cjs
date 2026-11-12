@@ -66,7 +66,11 @@ recordMemories(state, [
 assert.equal(state.life.memory.diaries[0].length, 2);
 for (let n = 0; n < 300; n++)
   recordMemories(state, [{ ...event, actionId: "next:" + n, tick: 5 + n }]);
-assert.equal(state.life.memory.diaries[0].length, 240);
+assert.ok(
+  state.life.memory.diaries[0].length > 0 &&
+    state.life.memory.diaries[0].length <= 240,
+);
+assert.equal(state.life.memory.diaries[0].at(-1).actionId, "next:299");
 assert.deepEqual(
   JSON.parse(JSON.stringify(state)).life.memory,
   state.life.memory,
@@ -78,4 +82,22 @@ assert.equal(branch.life.memory.diaries[0].at(-1).timeline, 2);
 assert.notDeepEqual(branch.life.memory, state.life.memory);
 console.log(
   "PASS: actor-only provenance, no owner/global knowledge leak, source whitelist, same-action idempotence, trait-based prompts, immutable events, bounded retention, persistence and isolated restored timeline.",
+);
+
+for (let id = 3; id < 20; id++) {
+  state.citizens.push({ id });
+  state.life.people[id] = { curiosity: 20, empathy: 20 };
+  for (let n = 0; n < 80; n++)
+    recordMemories(state, [
+      {
+        ...event,
+        actionId: "budget:" + id + ":" + n,
+        actors: [id],
+        text: "x".repeat(1000),
+      },
+    ]);
+}
+assert.ok(JSON.stringify(state.life.memory).length <= 120000);
+console.log(
+  "PASS: shared diary storage budget retains headroom for existing world state.",
 );
