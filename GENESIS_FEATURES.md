@@ -1,3 +1,27 @@
+# Current feature status — Curiosity pilot · 2026-11-12
+
+Supersedes older research status below. Implementation 98593a3, branch genesis/curiosity-pilot-20261112.
+
+| Feature | Status | Verification |
+|---|---|---|
+| Autonomous curiosity | VERIFIED (bounded pilot) | Vera noticed her own different harvests without assignment; needs/resources gate research |
+| Hypotheses and laboratory | VERIFIED (harvest only) | Four virtual production-rule trials, material cost, no food minting; synthetic alternative outcomes tested |
+| Research Library and evidence | VERIFIED | Saved live project, searchable notebook, original old Work event retrieval, refresh persistence |
+| Confidence history | VERIFIED | Original tentative scores, collaborator uncertainty, final weather/experience scores; actor-only updates |
+| Research conversations and diaries | VERIFIED | Recorded source-linked interactions; participant-only memory tests |
+| Daily Tea research recap | VERIFIED | Live saved finding and results shown accurately |
+| Research command | VERIFIED | What’s everyone researching? routes to saved library |
+| Multiple simultaneous investigations | NOT STARTED | One project cap intentionally remains |
+| General deep AI conversations / real-world research | NOT STARTED | Rules/templates only, external research disconnected |
+| Debates, organizations, scientific ethics, expeditions | NOT STARTED | No controls advertised as working |
+| Mystery artifacts, Gazette, information map, time capsule, museum | NOT STARTED | Require additional persistent systems |
+| Creator hypothesis / secure secret archive | BLOCKED | Need knowledge/action design and backend administrator access control |
+| Generational research | NOT STARTED | Child-safe life stages and inheritance prerequisites |
+
+Nine verification suites and build pass. Existing functionality/status remains documented below; do not treat planned features as complete.
+
+---
+
 # Human-friendly upgrade acceptance — November 12, 2026
 
 Current branch genesis/human-friendly-20261112, verified code a7d1c20 (core 8990aa8). Latest section overrides older display labels below.

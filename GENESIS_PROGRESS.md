@@ -1,3 +1,21 @@
+# Latest checkpoint — Curiosity pilot · 2026-11-12
+
+This section supersedes older status below. Branch: genesis/curiosity-pilot-20261112. Verified implementation commit: 98593a3.
+
+VERIFIED: one complete autonomous harvest investigation, competing weather/experience explanations, recorded participant conversation, four controlled virtual model trials, evidence-linked confidence history, searchable Research Library, exact canonical source-event retrieval, participant-only diary integration, and truthful Daily Tea research updates.
+
+Live acceptance: saved checkpoint before advancing nine days from Year 1 Month 2 Day 30 06:00 to Month 3 Day 9 06:00. Vera independently opened a question on Day 6 after personal Rain/Clear harvest observations. Theo collaborated. Finding saved Day 8 18:00: Clear yields 8 at experience 25/75; Rain yields 10 at both. Two materials consumed, no test food created. Both final confidence scores weather 90%, experience 10%. Original Day 4 Work evidence retrieved from backend; finding and confidence history survived browser refresh. Daily Tea contains the exact saved finding and trial result. Existing 13 citizens preserved.
+
+Tests: all nine verify-genesis suites pass (base, commands, life, backend, families, products, memory, friendly, inquiry); npm run build passed; convex dev --once passed; git diff --check passed. New additive actionId index only, no destructive migration. Friendly baseline comparison explicitly disables inquiry to isolate pre-existing behavior. Life test recognizes source-linked research conversations and pre-existing 80-entry family memory cap.
+
+Files: data/genesisLife.ts, data/genesisMemory.ts, data/genesisFriendly.ts, convex/genesis.ts, convex/schema.ts, src/components/ResearchLibrary.tsx and Genesis/GenesisPanels/CitizenDiary/GenesisFriendly.css; scripts/verify-genesis-inquiry.cjs and adjusted regressions.
+
+Private preview: https://redesigned-dollop-vgq5599rxw6hjpr-5173.app.github.dev/ai-town#genesis-research . Open Research Library or ask What’s everyone researching? Codespace must be awake; no always-on background simulation. Existing run/environment instructions below remain applicable. No new environment variables, paid APIs, public deployment or external research.
+
+Limits: bounded rules/templates, one harvest project maximum; virtual trials inspect the same cropYield function used by real in-game farming. Not general AI research, physical experiments, real scientific inference, or consciousness. Confidence is a game belief score. Multiple topics, debates, groups, scandals, artifacts, Gazette, creator discovery and generational research are unfinished. No physical iPad/Safari verification this session. Preserve pre-existing untracked README and bakery build artifacts.
+
+---
+
 # Current checkpoint — Human-friendly Genesis · November 12, 2026
 
 Branch: genesis/human-friendly-20261112. Latest verified implementation: a7d1c20 (core upgrade 8990aa8). Inspected baseline 12c1315; existing untracked files preserved. This section supersedes older scope notes below.

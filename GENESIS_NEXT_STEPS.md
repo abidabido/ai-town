@@ -1,3 +1,17 @@
+# Next work — Curiosity pilot · 2026-11-12
+
+Current branch genesis/curiosity-pilot-20261112; verified implementation 98593a3. Read latest sections in all three checkpoint files before older queues. Preserve saved Vera/Theo study and 13 citizens.
+
+1. Multiple investigations — NOT STARTED. Files: data/genesisLife.ts (InquiryState, observeHarvest, scheduling), ResearchLibrary.tsx, verify-genesis-inquiry.cjs. Replace single-project gate with bounded deduplication/capacity and participant reservations across projects. Prevent overlapping participants/resources and maintain source links. Acceptance: two distinct valid questions progress independently, urgent needs defer research, no duplicate costs, reload/checkpoint isolation holds. Do not create duplicate harvest stories just to inflate activity.
+2. Replication and new supported question — NOT STARTED. Same files plus actual world-rule function. Persist proposed replication, independent observations, costs, result and confidence revision. Acceptance: measured outcomes can contradict prior explanations; old results remain immutable.
+3. Research query precision — IN PROGRESS. data/genesisFriendly.ts and Genesis.tsx. Current aliases open the saved pilot library; add explicit active/disproven/oldest filters rather than implying a finished project is active. Test empty states and source links.
+4. Small research help topic/mobile audit — NOT STARTED. GenesisHelp and GenesisFriendly.css. Explain virtual experiments and belief scores; verify real Safari camera, anchors, navigation wrap and long evidence panels. Cloud-browser fallback is not physical-device proof.
+5. Only then add debate scheduling, broader diaries, persistent investigation-board relationships and Gazette grounded in canonical events. Admin-only secret archive requires actual backend authentication. External research must use authorized tools and citations, not invented browsing.
+
+Run scripts/verify-genesis{,-commands,-life,-backend,-families,-products,-memory,-friendly,-inquiry}.cjs and npm run build. Existing friendly suite needs baseline ancestor 12c1315. Deploy existing Convex with convex dev --once only after passing. No paid/public changes. Existing live savepoint allows reversible recovery; do not restore it without an intentional world change.
+
+---
+
 # Next work — Human-friendly Genesis · November 12, 2026
 
 Read the current sections of GENESIS_PROGRESS.md and GENESIS_FEATURES.md first. Branch genesis/human-friendly-20261112; implementation a7d1c20 (core 8990aa8). Preserve 13 existing adults, private planner, bakery, profiles and new navigation. This queue supersedes older priorities below for the current language/UX request.
