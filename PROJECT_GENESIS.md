@@ -70,3 +70,8 @@ The life suite checks six hundred deterministic steps, conserved money, ledger r
 7. Backend authorization, production hosting, real iOS testing and plan-aware storage controls before broad deployment.
 
 Do not describe the above remaining systems as implemented or simulate their outcomes only in prose.
+
+
+## Usable 3D and Studio milestone
+
+The 3D view and camera presets, persistent adult creation, source inspection, and sandboxed bakery basket were browser verified. Nova was added without replacing founding citizens. The current village advances with 13 adults and a balanced ledger. The first bakery build exposed a packaging issue; the corrected Nova-assigned build works. A source-only syntax check now runs before artifact packaging. The corrected artifact and ZIP are committed for reuse. No publication or payments were enabled. The worker uses a fixed template, not an autonomous model. It can run with node scripts/genesis-studio-worker.cjs; it stops after 30 minutes or three builds. Actual Safari touch testing and broader simulation systems remain pending.

@@ -1,0 +1,20 @@
+{
+  "project": "ms77saxzt3wnrcnqsfdxxx0fr98j38sp",
+  "createdAt": "2026-11-12T04:09:16.873Z",
+  "builder": "trusted-template-worker",
+  "modelCalls": 0,
+  "sha256": "0e32d82da586d0a819af3b0d9a8906b9557ca4071fdbdd49efc211cdfc11cf9d",
+  "files": {
+    "index.html": "bb0f4b8b4bc16631fc3772292f592af09c357345c10abc45002cb5ab49f03a8a",
+    "style.css": "2a67defd38e0cbc6bb40b156d47d9368152fed77dc78dcf7c7f73b142a6797e1",
+    "app.js": "81593e7cd69117804f96742f9fe1c596c250d0d6e6497467f00f5e867e49c39c",
+    "model.js": "9b48b77da9c988150283645186b04a0195f17055eb84d7bc9e73144f82ee1fa5",
+    "model.test.mjs": "4a49605aec668fa8493789fcd981f39f295c43140dfec244ab42735ce2414e78",
+    "package.json": "72b3167a2ce5253df7af9744a0cb0631118299a1adb05e3052215bb1a962c96b",
+    "README.md": "62d1f27b58cd694402abb073a2210562761a922b3e52cda493dfbb0de2223184",
+    "preview.html": "4a5ed49313daad1133249ba467d9f0119fb8a52379d9ed955c5711cca0e07777",
+    "PROJECT_BRIEF.txt": "5779e7a0865d5dae7cea39d6c0b51618669e37d7ded4915f7fb2ee473a1056cb"
+  },
+  "tests": "4 passed; 0 failed",
+  "publication": "not deployed"
+}

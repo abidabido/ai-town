@@ -1,0 +1,1 @@
+{"name":"genesis-village-bakery","private":true,"type":"module","scripts":{"test":"node --test model.test.mjs"}}
