@@ -1482,6 +1482,8 @@ export type ObserverPresence = {
   label: string;
   sequence: number;
   lastPulse: number;
+  pulsePosition?: {x:number;y:number};
+  attempted?: Record<string,number>;
   awareness: Record<string, ObserverAwareness>;
   encounters: ObserverEncounter[];
 };
@@ -1646,15 +1648,20 @@ export function pulseObserver(out: LifeResult): void {
     !o.active ||
     o.mode === "Invisible" ||
     o.mode === "The Announcement" ||
-    o.lastPulse === s.tick
+    (o.lastPulse === s.tick && (!o.pulsePosition || Math.hypot(o.x-o.pulsePosition.x,o.y-o.pulsePosition.y)<4))
   )
     return;
   o.lastPulse = s.tick;
+  o.pulsePosition={x:o.x,y:o.y};
+  o.attempted??={};
   const notices: ObserverWitness[] = [];
   for (const c of s.citizens) {
     const old = o.awareness[c.id];
     if (old && s.tick - old.lastNotice < 4) continue;
+    if(o.attempted[c.id]===s.tick)continue;
     const chance = observerDetectionChance(s, c.id);
+    if(chance<=0)continue;
+    o.attempted[c.id]=s.tick;
     const draw =
       (Math.imul(
         (s.seed ^
@@ -1758,7 +1765,7 @@ export function applyObserverPresence(
       o.color = request.color;
     }
     if (request.label !== undefined) {
-      if (request.label.length > 40 || /[<> -]/.test(request.label))
+      if (request.label.length > 40 || /[<>\u0000-\u001f]/.test(request.label))
         throw Error("Keep the visitor label short and plain.");
       o.label = request.label;
     }
@@ -1823,7 +1830,7 @@ export function applyObserverPresence(
     const message = isClaim
       ? "Abby says she designed this simulated world."
       : request.message?.trim();
-    if (!message || message.length > 240 || /[ -]/.test(message))
+    if (!message || message.length > 240 || /[\u0000-\u001f]/.test(message))
       throw Error("Write a message of 1–240 plain characters.");
     const witnesses: ObserverWitness[] = [];
     for (const c of recipients) {
