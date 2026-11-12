@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type ComponentProps } from "react";
 import * as T from "three";
+import { useMutation } from "convex/react";
+import { api as convexApi } from "../../convex/_generated/api";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js";
 import type GenesisWorld from "./GenesisWorld";
 import { factionColors } from "./GenesisWorld";
 import { calendar, PLACES, observerPresence } from "../../data/genesisLife";
 import "./Genesis3D.css";
-type Props = ComponentProps<typeof GenesisWorld>;
+type Props = ComponentProps<typeof GenesisWorld> & { revision: number };
 export default function GenesisWorld3D(props: Props) {
   const host = useRef<HTMLDivElement>(null),
     latest = useRef(props),
@@ -21,6 +23,27 @@ export default function GenesisWorld3D(props: Props) {
     [cinema, setCinema] = useState(false);
   const options = useRef({ follow, cinema });
   options.current = { follow, cinema };
+  const presenceAction = useMutation(convexApi.genesis.observerPresenceAction);
+  const [walking, setWalking] = useState(false),
+    [walkStatus, setWalkStatus] = useState(""),
+    [streetView, setStreetView] = useState(false);
+  async function walk(dx: number, dy: number) {
+    const o = observerPresence(latest.current.state);
+    setWalking(true);
+    try {
+      const result = await presenceAction({
+        action: "move",
+        x: Math.max(2, Math.min(98, o.x + dx)),
+        y: Math.max(2, Math.min(98, o.y + dy)),
+        expectedRevision: latest.current.revision,
+      });
+      setWalkStatus(result.message);
+    } catch {
+      setWalkStatus("That step did not save. Please try again.");
+    } finally {
+      setWalking(false);
+    }
+  }
   useEffect(() => {
     const root = host.current!;
     const scene = new T.Scene();
@@ -407,6 +430,7 @@ export default function GenesisWorld3D(props: Props) {
         if (v === "street") {
           const o = observerPresence(latest.current.state);
           street = true;
+          setStreetView(true);
           camera = new T.PerspectiveCamera(
             65,
             root.clientWidth / root.clientHeight,
@@ -438,6 +462,7 @@ export default function GenesisWorld3D(props: Props) {
         }
         if (street) {
           street = false;
+          setStreetView(false);
           camera = skyCamera;
           controls.object = camera;
           controls.enablePan = true;
@@ -708,6 +733,25 @@ export default function GenesisWorld3D(props: Props) {
           Slow camera tour
         </button>
       </div>
+      {streetView && (
+        <div className="world3d-tools" aria-label="Street walking controls">
+          <button disabled={walking} onClick={() => void walk(0, -5)}>
+            Step north
+          </button>
+          <button disabled={walking} onClick={() => void walk(0, 5)}>
+            Step south
+          </button>
+          <button disabled={walking} onClick={() => void walk(-5, 0)}>
+            Step west
+          </button>
+          <button disabled={walking} onClick={() => void walk(5, 0)}>
+            Step east
+          </button>
+          <span role="status">
+            {walking ? "Saving your step…" : walkStatus}
+          </span>
+        </div>
+      )}
       <div ref={host} className="world3d-stage" />
       <p className="world3d-help">
         Street View stands at your saved Observer position; use Observer

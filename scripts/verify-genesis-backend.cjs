@@ -227,6 +227,83 @@ const count = (t) => [...rows.values()].filter((r) => r.table === t).length;
   const noDouble = await call("catchUp", { expectedRevision: caught.revision });
   assert.equal(noDouble.tick, 118);
   assert.ok(noDouble.message.includes("No away time"));
+  current = await call("current");
+  const beforePresence = count("genesisEvents");
+  const stalePresence = await call("observerPresenceAction", {
+    expectedRevision: current.revision - 1,
+    action: "enter",
+  });
+  assert.equal(stalePresence.ok, false);
+  assert.equal(count("genesisEvents"), beforePresence);
+  for (const [text, mode] of [
+    ["activate the feeling", "The Feeling"],
+    ["hide my presence", "Invisible"],
+    ["appear as the visitor", "The Visitor"],
+    ["leave the village", "The Visitor"],
+  ]) {
+    current = await call("current");
+    const result = await call("command", {
+      text,
+      expectedTick: current.state.tick,
+      expectedRevision: current.revision,
+    });
+    assert.equal(result.ok, true);
+    current = await call("current");
+    assert.equal(current.state.life.observer.mode, mode);
+    if (text === "leave the village")
+      assert.equal(current.state.life.observer.active, false);
+  }
+  current = await call("current");
+  let result = await call("observerPresenceAction", {
+    action: "configure",
+    mode: "The Creator",
+    expectedRevision: current.revision,
+  });
+  assert.ok(result.ok);
+  current = await call("current");
+  result = await call("observerPresenceAction", {
+    action: "reveal",
+    citizen: 0,
+    expectedRevision: current.revision,
+  });
+  assert.ok(result.ok);
+  current = await call("current");
+  assert.ok(current.state.life.observer.awareness[0].claimReceived);
+  assert.ok(!current.state.life.observer.awareness[1]?.claimReceived);
+  assert.ok(
+    current.state.life.memory.diaries[0].some(
+      (m) => m.kind === "ObserverClaim",
+    ),
+  );
+  const countBeforePublic = count("genesisEvents");
+  result = await call("observerPresenceAction", {
+    action: "reveal",
+    expectedRevision: current.revision,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(count("genesisEvents"), countBeforePublic);
+  result = await call("observerPresenceAction", {
+    action: "configure",
+    mode: "The Announcement",
+    expectedRevision: current.revision,
+  });
+  assert.ok(result.ok);
+  current = await call("current");
+  result = await call("observerPresenceAction", {
+    action: "announce",
+    message: "A visitor is in town.",
+    confirmed: true,
+    expectedRevision: current.revision,
+  });
+  assert.ok(result.ok);
+  current = await call("current");
+  assert.ok(
+    [...rows.values()].some(
+      (r) =>
+        r.table === "genesisEvents" && r.doc.kind === "ObserverAnnouncement",
+    ),
+  );
+  assert.equal(current.state.life.observer.mode, "The Announcement");
   console.log(
     "PASS: backend handlers with isolated database double: idempotent migration, preserved legacy state, reviewed funding, stale-command guard, global pause, bounded advance, linked chat/ledger, unsupported command no-op, checkpoint confirmation/restore timelines, and non-duplicating catch-up.",
   );

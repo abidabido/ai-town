@@ -750,6 +750,7 @@ export default function Genesis() {
             <div className="layout">
               <div>
                 <GenesisWorld
+                  revision={current!.revision}
                   state={state}
                   selected={selected}
                   playing={playing}

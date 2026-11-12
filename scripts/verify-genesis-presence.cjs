@@ -236,3 +236,8 @@ assert.equal(life.totalMoney(advanced), life.totalMoney(entered.state));
 console.log(
   "PASS: default, invisible, distance, awake/attention, traits, obstruction, cooldown/deduplication, selective claims, noticeboard broadcast, private memories, persistence, validation, conservation and immutable history",
 );
+
+assert.throws(
+  () => life.applyObserverPresence(fresh, { action: "move", x: 48, y: 51 }),
+  /inside a building/,
+);

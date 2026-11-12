@@ -1786,6 +1786,19 @@ export function applyObserverPresence(
       request.y! > 98
     )
       throw Error("Choose a village position between 2 and 98.");
+    const blocks = [
+      ...Object.entries(PLACES)
+        .filter(([k]) => k !== "homes")
+        .map(([, p]) => p),
+      ...s.life.buildings,
+    ];
+    if (
+      blocks.some(
+        (b) =>
+          Math.abs(b.x - request.x!) < 4 && Math.abs(b.y - request.y!) < 3.5,
+      )
+    )
+      throw Error("That spot is inside a building. Choose a path beside it.");
     if (Math.hypot(request.x! - o.x, request.y! - o.y) > 0.01) {
       o.x = request.x!;
       o.y = request.y!;

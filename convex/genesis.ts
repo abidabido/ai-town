@@ -335,6 +335,39 @@ export const command = mutation({
         ? "All citizen autoplay paused. Manual time steps remain available."
         : "Citizen autoplay enabled while an observer page is visible.";
     }
+    const presenceMode = (
+      {
+        "switch to invisible mode": "Invisible",
+        "hide my presence": "Invisible",
+        "activate the feeling": "The Feeling",
+        "appear as the visitor": "The Visitor",
+        "switch to the visitor": "The Visitor",
+        "switch to creator mode": "The Creator",
+        "switch to announcement mode": "The Announcement",
+      } as Record<string, string>
+    )[text];
+    if (presenceMode) {
+      doc = await ensure(ctx, doc);
+      out = applyObserverPresence(doc.state, {
+        action: "configure",
+        mode: presenceMode,
+      });
+      if (text === "appear as the visitor" || text === "activate the feeling") {
+        const entered = applyObserverPresence(out.state, { action: "enter" });
+        entered.events.unshift(...out.events);
+        out = entered;
+      }
+      message =
+        "Observer mode saved: " +
+        presenceMode +
+        "." +
+        (presenceMode === "The Creator" ? " No identity claim was sent." : "");
+    }
+    if (text === "leave the village") {
+      doc = await ensure(ctx, doc);
+      out = applyObserverPresence(doc.state, { action: "leave" });
+      message = "You have left the village. Earlier memories remain.";
+    }
     const problem = text.match(
       /^(?:give (?:the )?scientists (?:a )?(?:new )?research problem|research)(?::| )+(.+)$/,
     );
