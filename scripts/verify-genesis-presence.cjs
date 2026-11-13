@@ -239,9 +239,38 @@ console.log(
 
 assert.throws(
   () => life.applyObserverPresence(fresh, { action: "move", x: 48, y: 51 }),
-  /inside a building/,
+  /crosses a building/,
 );
 
-const attention=copy(entered.state);attention.life.people[0].activity='Free time';attention.life.people[0].stress=0;const relaxedChance=life.observerDetectionChance(attention,0);attention.life.people[0].activity='Working';assert.ok(life.observerDetectionChance(attention,0)<relaxedChance);attention.life.people[0].activity='Free time';attention.life.weather='Rain';assert.ok(life.observerDetectionChance(attention,0)<relaxedChance);attention.life.observer.sensitivity=0;assert.equal(life.observerDetectionChance(attention,0),0);
+const attention = copy(entered.state);
+attention.life.people[0].activity = "Free time";
+attention.life.people[0].stress = 0;
+const relaxedChance = life.observerDetectionChance(attention, 0);
+attention.life.people[0].activity = "Working";
+assert.ok(life.observerDetectionChance(attention, 0) < relaxedChance);
+attention.life.people[0].activity = "Free time";
+attention.life.weather = "Rain";
+assert.ok(life.observerDetectionChance(attention, 0) < relaxedChance);
+attention.life.observer.sensitivity = 0;
+assert.equal(life.observerDetectionChance(attention, 0), 0);
 
-let newAreaNoticed=false;for(let seed=1;seed<1000&&!newAreaNoticed;seed++){const s=fixture();s.seed=seed;const first=life.applyObserverPresence(s,{action:'enter'});const later=life.applyObserverPresence(first.state,{action:'move',x:96,y:90});newAreaNoticed=later.events.some(e=>e.kind==='ObserverNotice'&&e.actors.includes(1));}assert.ok(newAreaNoticed,'A newly nearby citizen can notice after moving to another area in the same time step');
+let newAreaNoticed = false;
+for (let seed = 1; seed < 1000 && !newAreaNoticed; seed++) {
+  const s = fixture();
+  s.seed = seed;
+  const first = life.applyObserverPresence(s, { action: "enter" });
+  first.state.citizens[1].x = 79;
+  first.state.citizens[1].y = 86;
+  const later = life.applyObserverPresence(first.state, {
+    action: "land",
+    x: 77,
+    y: 86,
+  });
+  newAreaNoticed = later.events.some(
+    (e) => e.kind === "ObserverNotice" && e.actors.includes(1),
+  );
+}
+assert.ok(
+  newAreaNoticed,
+  "A newly nearby citizen can notice after moving to another area in the same time step",
+);

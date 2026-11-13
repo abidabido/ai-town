@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import {
   OBSERVER_MODES,
   observerPresence,
+  nearestObserverRoad,
   PLACES,
   calendar,
   type LivingState,
@@ -123,7 +124,10 @@ export default function ObserverPresencePanel({
           onChange={(e) => {
             const p = PLACES[e.target.value];
             if (p)
-              void send({ action: "move", x: p.x, y: Math.min(98, p.y + 6) });
+              void send({
+                action: "land",
+                ...nearestObserverRoad(state, p.x, p.y + 6),
+              });
             e.target.value = "";
           }}
         >
@@ -173,7 +177,10 @@ export default function ObserverPresencePanel({
           onClick={() => {
             const c = state.citizens.find((c) => c.id === selected);
             if (c)
-              void send({ action: "move", x: Math.min(98, c.x + 2), y: c.y });
+              void send({
+                action: "land",
+                ...nearestObserverRoad(state, c.x + 2, c.y),
+              });
           }}
         >
           Visit selected villager
@@ -387,11 +394,11 @@ export default function ObserverPresencePanel({
           not prove awareness or consciousness.
         </p>
         <p>
-          Still being developed: first-person Street View, automatic
-          camera-linked movement, entering buildings, visitor conversations,
-          rumors, Observer research, reputation, and a secure administrator-only
-          archive. Creator claims have no proof mechanism yet. Existing harvest
-          research is preserved.
+          Working: first-person Street View with validated path movement and
+          drag-to-look. Still being developed: automatic camera-linked movement,
+          entering buildings, visitor conversations, rumors, Observer research,
+          reputation, and a secure administrator-only archive. Creator claims
+          have no proof mechanism yet. Existing harvest research is preserved.
         </p>
       </details>
     </section>

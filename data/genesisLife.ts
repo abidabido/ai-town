@@ -1787,6 +1787,26 @@ export function applyObserverPresence(
       o.active = false;
       record("Observer departed. Earlier memories remain.");
     }
+  } else if (request.action === "land") {
+    if (
+      !Number.isFinite(request.x) ||
+      !Number.isFinite(request.y) ||
+      !observerRoadSurface(s, request.x!, request.y!)
+    )
+      throw Error("Choose a clear road, sidewalk or entrance path to land.");
+    o.x = request.x!;
+    o.y = request.y!;
+    o.active = true;
+    record(
+      "Observer landed on a village path at " +
+        o.x +
+        ", " +
+        o.y +
+        " in " +
+        o.mode +
+        " mode.",
+    );
+    pulseObserver(out);
   } else if (request.action === "move") {
     if (
       !Number.isFinite(request.x) ||
@@ -1797,19 +1817,10 @@ export function applyObserverPresence(
       request.y! > 98
     )
       throw Error("Choose a village position between 2 and 98.");
-    const blocks = [
-      ...Object.entries(PLACES)
-        .filter(([k]) => k !== "homes")
-        .map(([, p]) => p),
-      ...s.life.buildings,
-    ];
-    if (
-      blocks.some(
-        (b) =>
-          Math.abs(b.x - request.x!) < 4 && Math.abs(b.y - request.y!) < 3.5,
-      )
-    )
-      throw Error("That spot is inside a building. Choose a path beside it.");
+    if (!observerCanWalk(s, o, { x: request.x!, y: request.y! }))
+      throw Error(
+        "That path crosses a building or the river. Walk around it or use a bridge.",
+      );
     if (Math.hypot(request.x! - o.x, request.y! - o.y) > 0.01) {
       o.x = request.x!;
       o.y = request.y!;
@@ -2578,4 +2589,116 @@ export function digitalEvening(out: LifeResult, reserved: number[]): number[] {
     )
     .slice(-40);
   return [...own];
+}
+
+// Shared physical surfaces: renderer and validated Observer movement use these same dimensions.
+export type VillageRect = { x1: number; x2: number; y1: number; y2: number };
+export const VILLAGE_ROADS: VillageRect[] = [
+  { x1: 29.5, x2: 34.5, y1: 6, y2: 96 },
+  { x1: 74.5, x2: 79.5, y1: 6, y2: 96 },
+  { x1: 6, x2: 96, y1: 29.5, y2: 34.5 },
+  { x1: 6, x2: 96, y1: 55.5, y2: 60.5 },
+  { x1: 6, x2: 96, y1: 89.5, y2: 94.5 },
+];
+export function villageBuildings(s: LivingState) {
+  return [
+    ...Object.entries(PLACES)
+      .filter(([k]) => k !== "homes")
+      .map(([type, p]) => ({ id: "civic-" + type, type, ...p })),
+    ...s.life.buildings,
+  ];
+}
+const containsPoint = (r: VillageRect, x: number, y: number, padding = 0) =>
+  x >= r.x1 - padding &&
+  x <= r.x2 + padding &&
+  y >= r.y1 - padding &&
+  y <= r.y2 + padding;
+export function villagePaths(s: LivingState): VillageRect[] {
+  return villageBuildings(s).flatMap((b) => {
+    const spine = Math.abs(b.x - 32) < Math.abs(b.x - 77) ? 32 : 77,
+      front = b.y + 5;
+    return [
+      {
+        x1: Math.min(spine, b.x) - 0.7,
+        x2: Math.max(spine, b.x) + 0.7,
+        y1: front - 0.7,
+        y2: front + 0.7,
+      },
+      { x1: b.x - 0.7, x2: b.x + 0.7, y1: b.y + 4.1, y2: front + 0.7 },
+    ];
+  });
+}
+export function observerCanStand(s: LivingState, x: number, y: number) {
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    x < 2 ||
+    x > 98 ||
+    y < 2 ||
+    y > 98
+  )
+    return false;
+  if (y > 68 && y < 76 && !(x >= 29 && x <= 35) && !(x >= 74 && x <= 80))
+    return false;
+  return !villageBuildings(s)
+    .filter((b) => b.type.toLowerCase() !== "gardens")
+    .some((b) => Math.abs(b.x - x) < 4.05 && Math.abs(b.y - y) < 3.7);
+}
+export function observerRoadSurface(s: LivingState, x: number, y: number) {
+  return (
+    observerCanStand(s, x, y) &&
+    (VILLAGE_ROADS.some((r) => containsPoint(r, x, y, 1.1)) ||
+      villagePaths(s).some((r) => containsPoint(r, x, y)))
+  );
+}
+export function observerCanWalk(
+  s: LivingState,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+) {
+  if (!observerCanStand(s, from.x, from.y) || !observerCanStand(s, to.x, to.y))
+    return false;
+  const count = Math.max(
+    1,
+    Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 0.2),
+  );
+  for (let i = 1; i <= count; i++) {
+    const t = i / count;
+    if (
+      !observerCanStand(
+        s,
+        from.x + (to.x - from.x) * t,
+        from.y + (to.y - from.y) * t,
+      )
+    )
+      return false;
+  }
+  return true;
+}
+export function nearestObserverRoad(s: LivingState, x: number, y: number) {
+  let best: { x: number; y: number } | undefined,
+    score = Infinity;
+  for (const r of [...VILLAGE_ROADS, ...villagePaths(s)]) {
+    const points = [
+      {
+        x: Math.max(r.x1, Math.min(r.x2, x)),
+        y: Math.max(r.y1, Math.min(r.y2, y)),
+      },
+    ];
+    if (r.x2 - r.x1 > r.y2 - r.y1) {
+      for (let xx = r.x1; xx <= r.x2; xx += 1)
+        points.push({ x: xx, y: (r.y1 + r.y2) / 2 });
+    } else
+      for (let yy = r.y1; yy <= r.y2; yy += 1)
+        points.push({ x: (r.x1 + r.x2) / 2, y: yy });
+    for (const p of points) {
+      const dist = Math.hypot(x - p.x, y - p.y);
+      if (dist < score && observerRoadSurface(s, p.x, p.y)) {
+        best = p;
+        score = dist;
+      }
+    }
+  }
+  if (!best) throw Error("No clear landing spot is available.");
+  return best;
 }

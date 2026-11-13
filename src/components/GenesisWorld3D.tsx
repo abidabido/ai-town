@@ -6,8 +6,19 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { SVGRenderer } from "three/examples/jsm/renderers/SVGRenderer.js";
 import type GenesisWorld from "./GenesisWorld";
 import { factionColors } from "./GenesisWorld";
-import { calendar, PLACES, observerPresence } from "../../data/genesisLife";
+import {
+  calendar,
+  PLACES,
+  observerPresence,
+  nearestObserverRoad,
+  observerRoadSurface,
+} from "../../data/genesisLife";
 import "./Genesis3D.css";
+import {
+  buildArchitecture,
+  buildVillageEnvironment,
+  buildCitizen,
+} from "./GenesisEnvironment";
 type Props = ComponentProps<typeof GenesisWorld> & { revision: number };
 export default function GenesisWorld3D(props: Props) {
   const host = useRef<HTMLDivElement>(null),
@@ -15,19 +26,57 @@ export default function GenesisWorld3D(props: Props) {
     api = useRef<{
       view: (mode: string) => void;
       zoom: (amount: number) => void;
+      heading: () => number;
     }>();
   latest.current = props;
-  const [quality, setQuality] = useState("balanced"),
+  const [quality, setQuality] = useState("auto"),
     [mode, setMode] = useState("Starting 3D renderer…"),
     [follow, setFollow] = useState(false),
-    [cinema, setCinema] = useState(false);
+    [cinema, setCinema] = useState(false),
+    [expanded, setExpanded] = useState(false);
   const options = useRef({ follow, cinema });
   options.current = { follow, cinema };
   const presenceAction = useMutation(convexApi.genesis.observerPresenceAction);
   const [walking, setWalking] = useState(false),
     [walkStatus, setWalkStatus] = useState(""),
     [streetView, setStreetView] = useState(false);
+  const landingRef = useRef(false),
+    busy = useRef(false);
+  const [landing, setLanding] = useState(false);
+  async function landAt(x: number, y: number) {
+    if (busy.current) return;
+    busy.current = true;
+    setWalking(true);
+    try {
+      const p = nearestObserverRoad(latest.current.state, x, y);
+      await presenceAction({
+        action: "land",
+        ...p,
+        expectedRevision: latest.current.revision,
+      });
+      landingRef.current = false;
+      setLanding(false);
+      api.current?.view("street");
+      setWalkStatus(
+        "You’re on a village path. Drag to look around, or use the walking buttons.",
+      );
+    } catch {
+      setWalkStatus(
+        "We couldn’t land there. Choose another clear path and try again.",
+      );
+    } finally {
+      busy.current = false;
+      setWalking(false);
+    }
+  }
   async function walk(dx: number, dy: number) {
+    if (busy.current) return;
+    busy.current = true;
+    const heading = api.current?.heading() ?? 0;
+    const rx = dx * Math.cos(heading) + dy * Math.sin(heading),
+      ry = -dx * Math.sin(heading) + dy * Math.cos(heading);
+    dx = rx;
+    dy = ry;
     const o = observerPresence(latest.current.state);
     setWalking(true);
     try {
@@ -39,18 +88,24 @@ export default function GenesisWorld3D(props: Props) {
       });
       setWalkStatus(result.message);
     } catch {
-      setWalkStatus("That step did not save. Please try again.");
+      setWalkStatus(
+        "That way is blocked, or the step didn’t save. Try a smaller step or walk around.",
+      );
     } finally {
+      busy.current = false;
       setWalking(false);
     }
   }
   useEffect(() => {
     const root = host.current!;
+    setStreetView(false);
     const scene = new T.Scene();
     scene.background = new T.Color("#a8c6cc");
     const skyCamera = new T.OrthographicCamera(-72, 72, 48, -48, 0.1, 500);
     let camera: T.OrthographicCamera | T.PerspectiveCamera = skyCamera,
-      street = false;
+      street = false,
+      yaw = 0,
+      pitch = 0;
     camera.position.set(105, 95, 115);
     camera.lookAt(0, 0, 0);
     let renderer: T.WebGLRenderer | SVGRenderer;
@@ -61,8 +116,18 @@ export default function GenesisWorld3D(props: Props) {
         powerPreference: "low-power",
       });
       gpu = true;
+      if (quality === "auto" && matchMedia("(max-width:700px)").matches)
+        renderer.setPixelRatio(1);
       renderer.setPixelRatio(
-        Math.min(devicePixelRatio, quality === "high" ? 2 : 1.25),
+        Math.min(
+          devicePixelRatio,
+          quality === "high"
+            ? 1.75
+            : quality === "low" ||
+                (quality === "auto" && matchMedia("(max-width:700px)").matches)
+              ? 1
+              : 1.25,
+        ),
       );
       renderer.shadowMap.enabled = quality === "high";
       renderer.shadowMap.type = T.PCFSoftShadowMap;
@@ -77,7 +142,7 @@ export default function GenesisWorld3D(props: Props) {
     root.appendChild(el);
     el.setAttribute("aria-label", "Interactive 3D village");
     el.setAttribute("role", "img");
-    const controls = new OrbitControls(camera, root);
+    const controls = new OrbitControls(camera, el as HTMLElement);
     controls.enableDamping = gpu;
     controls.dampingFactor = 0.12;
     controls.minZoom = 0.55;
@@ -90,7 +155,9 @@ export default function GenesisWorld3D(props: Props) {
     controls.update();
     const ambient = new T.HemisphereLight("#fff4d8", "#6f7b67", 2.3);
     scene.add(ambient);
-    const sun = new T.DirectionalLight("#ffdda3", 2.8);
+    const fillLight = new T.AmbientLight("#e1e9e3", 0.8);
+    scene.add(fillLight);
+    const sun = new T.DirectionalLight("#fff1dc", 1.3);
     sun.position.set(-35, 70, 28);
     sun.castShadow = gpu && quality === "high";
     sun.shadow.mapSize.set(1024, 1024);
@@ -129,60 +196,45 @@ export default function GenesisWorld3D(props: Props) {
       x: number,
       y: number,
       z: number,
-    ) => mesh(p, new T.BoxGeometry(w, h, d, w>40?Math.ceil(w/5):1, 1, d>40?Math.ceil(d/5):1), c, x, y, z);
+    ) =>
+      mesh(
+        p,
+        new T.BoxGeometry(
+          w,
+          h,
+          d,
+          w > 40 ? Math.ceil(w / 5) : 1,
+          1,
+          d > 40 ? Math.ceil(d / 5) : 1,
+        ),
+        c,
+        x,
+        y,
+        z,
+      );
+    const geometryCache = new Map<string, T.BufferGeometry>();
+    const geo = (key: string, make: () => T.BufferGeometry) => {
+      if (!geometryCache.has(key)) geometryCache.set(key, make());
+      return geometryCache.get(key)!;
+    };
+    const windows: T.Mesh[] = [];
+    const tools = {
+      box,
+      mesh,
+      material,
+      geo,
+      gpu,
+      detail:
+        gpu &&
+        quality !== "low" &&
+        !(quality === "auto" && matchMedia("(max-width:700px)").matches),
+      windows,
+    };
     const terrain = box(scene, 122, 3, 113, "#748765", 0, -1.6, 0);
     terrain.userData.ground = true;
-    for (let i = 0; i < 7; i++) {
-      const h = mesh(
-        scene,
-        new T.SphereGeometry(1, 10, 5),
-        "#7f906d",
-        -57 + i * 18,
-        -1,
-        -50,
-      );
-      h.scale.set(15, 3 + (i % 3) * 2, 10);
-    }
-    box(scene, 106, 0.12, 5, "#bcb39d", 0, 0.03, 0);
-    box(scene, 5, 0.12, 91, "#bcb39d", -30, 0.04, -1);
-    box(scene, 5, 0.12, 85, "#bcb39d", 29, 0.04, 0);
-    box(scene, 67, 0.12, 4, "#c4bba4", 0, 0.05, -28);
-    box(scene, 92, 0.12, 4, "#c4bba4", 0, 0.05, 35);
-    box(scene, 121, 0.18, 8, "#6aabb5", 0, 0.08, 22);
-    box(scene, 9, 0.65, 12, "#b49976", -30, 0.45, 22);
-    box(scene, 9, 0.65, 12, "#b49976", 29, 0.45, 22);
-    for (let i = 0; i < (quality === "low" ? 16 : 32); i++) {
-      const a = i * 2.399,
-        x = Math.cos(a) * (43 + (i % 5) * 3),
-        z = Math.sin(a) * (37 + (i % 4) * 4);
-      if (Math.abs(z - 22) < 8) continue;
-      const tree = new T.Group();
-      tree.position.set(x, 0, z);
-      scene.add(tree);
-      mesh(tree, new T.CylinderGeometry(0.4, 0.6, 4, 5), "#78624c", 0, 2, 0);
-      mesh(
-        tree,
-        new T.ConeGeometry(2.6, 7, 6),
-        i % 3 ? "#436e55" : "#658055",
-        0,
-        6.2,
-        0,
-      );
-    }
-    for (let i = 0; i < 8; i++) {
-      box(scene, 12, 0.2, 0.5, "#5c5940", -34, 0.2, -37 + i * 1.4);
-      for (let j = 0; j < 4; j++)
-        mesh(
-          scene,
-          new T.ConeGeometry(0.45, 1, 4),
-          "#80a25c",
-          -39 + j * 3,
-          0.7,
-          -37 + i * 1.4,
-        );
-    }
+    buildVillageEnvironment(tools, scene, latest.current.state);
     const lamps: T.Mesh[] = [];
-    for (const x of [-29, 29])
+    for (const x of [-14.5, 30.5])
       for (const z of [-17, 12, 34]) {
         box(scene, 0.25, 4, 0.25, "#4e5350", x, 2, z);
         lamps.push(
@@ -197,6 +249,11 @@ export default function GenesisWorld3D(props: Props) {
       body?: T.Mesh;
       head?: T.Mesh;
       hair?: T.Mesh;
+      phone?: T.Group;
+      book?: T.Group;
+      bowl?: T.Mesh;
+      longHair?: T.Mesh;
+      pony?: T.Mesh;
       last?: string;
       movingUntil?: number;
     };
@@ -209,6 +266,7 @@ export default function GenesisWorld3D(props: Props) {
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = text;
+      b.onpointerdown = (e) => e.stopPropagation();
       b.onclick = click;
       labels.appendChild(b);
       return b;
@@ -250,44 +308,14 @@ export default function GenesisWorld3D(props: Props) {
       g.position.copy(world(b.x, b.y));
       g.userData.building = b.id;
       scene.add(g);
-      const h = b.type.toLowerCase(),
-        c =
-          h === "hospital"
-            ? "#dfddd2"
-            : h === "laboratory"
-              ? "#c4cecb"
-              : h === "market"
-                ? "#cfbda6"
-                : "#d5c7ab";
-      box(g, 7, 5.3, 6, c, 0, 2.65, 0);
-      const roof = mesh(
-        g,
-        new T.ConeGeometry(6.1, 3.4, 4),
-        "#816e64",
-        0,
-        6.9,
-        0,
-      );
-      roof.rotation.y = Math.PI / 4;
-      box(g, 1.4, 2.7, 0.18, "#665a49", 0, 1.35, 3.1);
-      for (const xx of [-2.3, 2.3]) {
-        box(g, 1.3, 1.5, 0.2, "#d9e4cd", xx, 3.15, 3.1);
-        box(g, 0.18, 1.5, 0.25, "#b2a082", xx, 3.15, 3.2);
-      }
-      box(g, 1, 3, 1, "#9e9080", 2.2, 6.8, -1);
-      if (h === "hospital" || h === "clinic") {
-        box(g, 0.65, 2.4, 0.3, "#af514a", 0, 4.1, 3.3);
-        box(g, 2.4, 0.65, 0.3, "#af514a", 0, 4.1, 3.3);
-      }
-      if (h === "observatory" || h === "laboratory") {
-        mesh(g, new T.SphereGeometry(3, 10, 6), "#829699", 0, 7, 0);
-      }
+      buildArchitecture(tools, g, b);
       const item: Item = {
         group: g,
         label: label(b.type, () => {
           const actual =
             latest.current.state.life.buildings.find((x) => x.id === b.id) ?? b;
           latest.current.onBuilding(actual);
+          setExpanded(false);
         }),
         target: g.position.clone(),
       };
@@ -303,63 +331,15 @@ export default function GenesisWorld3D(props: Props) {
       g.position.copy(world(c.x, c.y));
       g.userData.citizen = c.id;
       scene.add(g);
-      const torso = mesh(
-        g,
-        new T.CylinderGeometry(0.45, 0.58, 1.25, 7),
-        p.profile?.outfit ?? factionColors[c.faction] ?? "#b6b5a0",
-        0,
-        1.45,
-        0,
-      );
-      const head = mesh(
-        g,
-        new T.SphereGeometry(0.37, 8, 6),
-        p.profile?.skin ?? "#c9a783",
-        0,
-        2.45,
-        0,
-      );
-      const hair = mesh(
-        g,
-        new T.SphereGeometry(0.39, 8, 5),
-        p.profile?.hair ?? "#493c33",
-        0,
-        2.6,
-        -0.04,
-      );
-      hair.scale.y = 0.6;
-      torso.material = (torso.material as T.MeshLambertMaterial).clone();
-      head.material = (head.material as T.MeshLambertMaterial).clone();
-      hair.material = (hair.material as T.MeshLambertMaterial).clone();
-      const limbs: T.Group[] = [];
-      for (let i = 0; i < 4; i++) {
-        const pivot = new T.Group();
-        pivot.position.set(
-          i < 2 ? (i ? 0.25 : -0.25) : i === 2 ? -0.63 : 0.63,
-          i < 2 ? 0.92 : 1.9,
-          0,
-        );
-        g.add(pivot);
-        mesh(
-          pivot,
-          new T.CylinderGeometry(0.12, 0.15, i < 2 ? 0.9 : 0.85, 5),
-          i < 2
-            ? "#475359"
-            : (p.profile?.outfit ?? factionColors[c.faction] ?? "#bbb"),
-          0,
-          -0.4,
-          0,
-        );
-        limbs.push(pivot);
-      }
+      const human = buildCitizen(tools, g, p, c.id);
       people.set(c.id, {
         group: g,
-        limbs,
-        body: torso,
-        head,
-        hair,
+        ...human,
         target: g.position.clone(),
-        label: label(c.name, () => latest.current.onCitizen(c.id)),
+        label: label(c.name, () => {
+          latest.current.onCitizen(c.id);
+          setExpanded(false);
+        }),
       });
     };
     const ghost = new T.Group();
@@ -368,7 +348,29 @@ export default function GenesisWorld3D(props: Props) {
     scene.add(ghost);
     const ray = new T.Raycaster(),
       pointer = new T.Vector2();
-    let down = { x: 0, y: 0 };
+    let dirty = true,
+      stillMoving = true,
+      renderedProps: Props | undefined;
+    controls.addEventListener("change", () => {
+      dirty = true;
+    });
+    let down = { x: 0, y: 0 },
+      dragging = false,
+      lastPointer = { x: 0, y: 0 };
+    const look = () => {
+      dirty = true;
+      camera.lookAt(
+        camera.position
+          .clone()
+          .add(
+            new T.Vector3(
+              -Math.sin(yaw) * Math.cos(pitch),
+              Math.sin(pitch),
+              -Math.cos(yaw) * Math.cos(pitch),
+            ),
+          ),
+      );
+    };
     const aim = (e: PointerEvent) => {
       const r = el.getBoundingClientRect();
       pointer.set(
@@ -378,8 +380,20 @@ export default function GenesisWorld3D(props: Props) {
       ray.setFromCamera(pointer, camera);
     };
     const pick = (e: PointerEvent) => {
+      dragging = false;
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 7) return;
+      dragging = false;
       aim(e);
+      if (landingRef.current && !latest.current.placement) {
+        const p = ray.ray.intersectPlane(
+          new T.Plane(new T.Vector3(0, 1, 0), 0),
+          new T.Vector3(),
+        );
+        if (p && observerRoadSurface(latest.current.state, p.x + 50, p.z + 50))
+          void landAt(p.x + 50, p.z + 50);
+        else setWalkStatus("Tap a clear road, sidewalk or entrance path.");
+        return;
+      }
       if (latest.current.placement) {
         const v = ray.ray.intersectPlane(
           new T.Plane(new T.Vector3(0, 1, 0), 0),
@@ -394,6 +408,7 @@ export default function GenesisWorld3D(props: Props) {
         while (o) {
           if (o.userData.citizen !== undefined) {
             latest.current.onCitizen(o.userData.citizen);
+            setExpanded(false);
             return;
           }
           if (o.userData.building) {
@@ -401,7 +416,10 @@ export default function GenesisWorld3D(props: Props) {
               latest.current.state.life.buildings.find(
                 (b) => b.id === o!.userData.building,
               ) ?? civic.find((b) => b.id === o!.userData.building);
-            if (b) latest.current.onBuilding(b);
+            if (b) {
+              latest.current.onBuilding(b);
+              setExpanded(false);
+            }
             return;
           }
           o = o.parent;
@@ -410,8 +428,20 @@ export default function GenesisWorld3D(props: Props) {
     };
     const start = (e: PointerEvent) => {
       down = { x: e.clientX, y: e.clientY };
+      lastPointer = { ...down };
+      dragging = true;
     };
     const hover = (e: PointerEvent) => {
+      if (street && dragging) {
+        yaw -= (e.clientX - lastPointer.x) * 0.006;
+        pitch = T.MathUtils.clamp(
+          pitch - (e.clientY - lastPointer.y) * 0.006,
+          -1.15,
+          1.15,
+        );
+        lastPointer = { x: e.clientX, y: e.clientY };
+        look();
+      }
       if (!latest.current.placement) return;
       aim(e);
       const v = ray.ray.intersectPlane(
@@ -425,11 +455,20 @@ export default function GenesisWorld3D(props: Props) {
     el.addEventListener("pointerdown", start as EventListener);
     el.addEventListener("pointerup", pick as EventListener);
     el.addEventListener("pointermove", hover as EventListener);
+    const release = () => {
+      dragging = false;
+    };
+    el.addEventListener("pointerleave", release);
+    el.addEventListener("pointercancel", release);
     api.current = {
+      heading: () => yaw,
       view: (v) => {
         if (v === "street") {
           const o = observerPresence(latest.current.state);
           street = true;
+          controls.enabled = false;
+          yaw = 0;
+          pitch = 0;
           setStreetView(true);
           camera = new T.PerspectiveCamera(
             65,
@@ -437,31 +476,28 @@ export default function GenesisWorld3D(props: Props) {
             0.1,
             500,
           );
-          camera.position.copy(world(o.x, o.y)).add(new T.Vector3(0, 1.8, 0));
+          camera.position.copy(world(o.x, o.y)).add(new T.Vector3(0, 1.75, 0));
           controls.object = camera;
           controls.target.copy(camera.position).add(new T.Vector3(0, 0, -8));
           controls.enablePan = false;
           controls.enableRotate = false;
           controls.autoRotate = false;
-          controls.update();
+          look();
           return;
         }
-        if (v === "look-left" || v === "look-right") {
+        if (v.startsWith("look-")) {
           if (street) {
-            const direction = controls.target
-              .clone()
-              .sub(camera.position)
-              .applyAxisAngle(
-                new T.Vector3(0, 1, 0),
-                v === "look-left" ? 0.3 : -0.3,
-              );
-            controls.target.copy(camera.position).add(direction);
-            controls.update();
+            if (v === "look-left") yaw += 0.3;
+            if (v === "look-right") yaw -= 0.3;
+            if (v === "look-up") pitch = Math.min(1.15, pitch + 0.2);
+            if (v === "look-down") pitch = Math.max(-1.15, pitch - 0.2);
+            look();
           }
           return;
         }
         if (street) {
           street = false;
+          controls.enabled = true;
           setStreetView(false);
           camera = skyCamera;
           controls.object = camera;
@@ -491,6 +527,7 @@ export default function GenesisWorld3D(props: Props) {
       },
     };
     const resize = () => {
+      dirty = true;
       const w = root.clientWidth,
         h = root.clientHeight;
       if (camera instanceof T.OrthographicCamera) {
@@ -515,7 +552,15 @@ export default function GenesisWorld3D(props: Props) {
       frame = requestAnimationFrame(animate);
       if (
         document.hidden ||
-        now - last < (gpu ? (quality === "low" ? 50 : 33) : 90)
+        now - last < (gpu ? (quality === "low" ? 50 : 33) : 350)
+      )
+        return;
+      if (
+        !gpu &&
+        !dirty &&
+        !stillMoving &&
+        renderedProps === latest.current &&
+        !options.current.cinema
       )
         return;
       last = now;
@@ -546,11 +591,12 @@ export default function GenesisWorld3D(props: Props) {
         const desired = world(observerState.x, observerState.y);
         const delta = new T.Vector3(
           desired.x - camera.position.x,
-          1.8 - camera.position.y,
+          (observerState.y > 67.5 && observerState.y < 76.5 ? 2.18 : 1.75) -
+            camera.position.y,
           desired.z - camera.position.z,
         );
-        camera.position.add(delta);
-        controls.target.add(delta);
+        camera.position.add(delta.multiplyScalar(0.3));
+        look();
       }
 
       state.life.buildings.forEach((b) => {
@@ -585,17 +631,26 @@ export default function GenesisWorld3D(props: Props) {
           it.group.position.lerp(it.target, 0.12);
         }
         const sleeping = /rest|sleep/i.test(p.activity);
-        it.group.rotation.z = sleeping ? Math.PI / 2 : 0;
-        it.group.position.y = sleeping ? 0.35 : 0;
+        it.group.rotation.z = 0;
+        it.group.visible = !sleeping;
+        it.group.position.y = 0;
+        const phone = /text|phone|post|whisper|scroll/i.test(p.activity),
+          reading = /read|study|research|investigat/i.test(p.activity),
+          eating = /eat|meal|breakfast/i.test(p.activity);
+        if (it.phone) it.phone.visible = !moving && phone;
+        if (it.book) it.book.visible = !moving && reading && !phone;
+        if (it.bowl) it.bowl.visible = !moving && eating;
         it.limbs!.forEach(
           (limb, i) =>
             (limb.rotation.x = moving
               ? Math.sin(now * 0.011 + i * Math.PI) * 0.7
-              : playing && /talk/i.test(p.activity) && i > 1
-                ? Math.sin(now * 0.004 + i) * 0.25
-                : playing && /work|farm/i.test(p.activity) && i > 1
-                  ? -0.6 + Math.sin(now * 0.005) * 0.3
-                  : 0),
+              : !moving && i > 1 && (phone || reading || eating)
+                ? -1.05
+                : playing && /talk/i.test(p.activity) && i > 1
+                  ? Math.sin(now * 0.004 + i) * 0.25
+                  : playing && /work|farm/i.test(p.activity) && i > 1
+                    ? -0.6 + Math.sin(now * 0.005) * 0.3
+                    : 0),
         );
         (it.body!.material as T.MeshLambertMaterial).color.set(
           p.profile?.outfit ?? factionColors[c.faction] ?? "#b6b5a0",
@@ -606,6 +661,19 @@ export default function GenesisWorld3D(props: Props) {
         (it.hair!.material as T.MeshLambertMaterial).color.set(
           p.profile?.hair ?? "#493c33",
         );
+        if (it.longHair) {
+          it.longHair.visible = /long|bob/i.test(p.profile?.hairstyle ?? "");
+          (it.longHair.material as T.MeshLambertMaterial).color.set(
+            p.profile?.hair ?? "#493c33",
+          );
+        }
+        if (it.pony) {
+          it.pony.visible = /pony|tied/i.test(p.profile?.hairstyle ?? "");
+          (it.pony.material as T.MeshLambertMaterial).color.set(
+            p.profile?.hair ?? "#493c33",
+          );
+        }
+        it.hair!.visible = !/bald/i.test(p.profile?.hairstyle ?? "");
         it.label.textContent = c.name;
         it.label.classList.toggle("chosen", selected === c.id);
         it.label.title = p.activity;
@@ -629,40 +697,89 @@ export default function GenesisWorld3D(props: Props) {
       }
       controls.autoRotate = !street && options.current.cinema;
       controls.autoRotateSpeed = 0.45;
-      controls.update();
-      const night = calendar(state.tick).hour === 0;
-      ambient.intensity = night ? 0.65 : 2.3;
-      sun.intensity = night ? 0.3 : 2.8;
+      if (!street) controls.update();
+      const hour = calendar(state.tick).hour,
+        daylight = Math.max(0, Math.sin(((hour - 6) / 12) * Math.PI)),
+        night = daylight < 0.1;
+      ambient.intensity = 0.45 + daylight * 0.6;
+      fillLight.intensity = night ? 0.28 : 0.7;
+      sun.intensity = 0.12 + daylight * 1.25;
+      sun.color.set(hour === 6 || hour === 18 ? "#f8cfa5" : "#fff1dc");
+      sun.position.set(
+        Math.cos(((hour - 6) / 12) * Math.PI) * 55,
+        12 + daylight * 65,
+        28,
+      );
       scene.background = new T.Color(
         night
-          ? "#28384c"
+          ? "#293c54"
           : state.life.weather === "Rain"
-            ? "#abbac0"
-            : "#b9d1d2",
+            ? "#b6c7cd"
+            : "#c5dade",
       );
-      lamps.forEach((m) =>
-        (m.material as T.MeshLambertMaterial).color.set(
-          night ? "#ffe292" : "#c9c2a6",
-        ),
-      );
+      for (const m of [...lamps, ...windows]) {
+        const mat = m.material as T.MeshLambertMaterial;
+        mat.emissive.set(night ? "#f0bf75" : "#000000");
+        mat.emissiveIntensity = night ? 0.65 : 0;
+      }
+      const occupied: { x: number; y: number; w: number; h: number }[] = [];
       for (const it of [...buildings.values(), ...people.values()]) {
         const pos = it.group.position
           .clone()
-          .add(new T.Vector3(0, it.limbs ? 4 : 10, 0))
+          .add(new T.Vector3(0, it.limbs ? 2.45 : 8.5, 0))
           .project(camera);
+        let px = ((pos.x + 1) * root.clientWidth) / 2,
+          py = ((-pos.y + 1) * root.clientHeight) / 2;
+        const w = Math.max(50, it.label.offsetWidth),
+          h = 31;
+        let tries = 0;
+        while (
+          occupied.some(
+            (r) =>
+              Math.abs(r.x - px) < (r.w + w) / 2 + 3 &&
+              Math.abs(r.y - py) < (r.h + h) / 2 + 2,
+          ) &&
+          tries++ < 10
+        )
+          py -= 33;
         it.label.style.transform =
-          "translate(-50%,-50%) translate(" +
-          ((pos.x + 1) * root.clientWidth) / 2 +
-          "px," +
-          ((-pos.y + 1) * root.clientHeight) / 2 +
-          "px)";
+          "translate(-50%,-50%) translate(" + px + "px," + py + "px)";
         it.label.hidden =
           pos.z < -1 ||
           pos.z > 1 ||
-          Math.abs(pos.x) > 1.2 ||
-          Math.abs(pos.y) > 1.2;
+          Math.abs(pos.x) > 1.15 ||
+          Math.abs(pos.y) > 1.15 ||
+          py < 15 ||
+          tries > 10;
+        if (!it.label.hidden) occupied.push({ x: px, y: py, w, h });
+      }
+      if (!gpu) {
+        const direction = camera.getWorldDirection(new T.Vector3());
+        scene.traverse((o) => {
+          if (o.userData.nearClipRadius !== undefined)
+            o.visible =
+              !street ||
+              o.position.clone().sub(camera.position).dot(direction) >
+                o.userData.nearClipRadius + 0.3;
+        });
       }
       renderer.render(scene, camera);
+      dirty = false;
+      renderedProps = latest.current;
+      stillMoving =
+        [...people.values()].some(
+          (it) => it.group.position.distanceTo(it.target) > 0.07,
+        ) ||
+        (street &&
+          camera.position.distanceTo(
+            world(observerState.x, observerState.y).add(
+              new T.Vector3(
+                0,
+                observerState.y > 67.5 && observerState.y < 76.5 ? 2.18 : 1.75,
+                0,
+              ),
+            ),
+          ) > 0.02);
     };
     frame = requestAnimationFrame(animate);
     return () => {
@@ -670,6 +787,8 @@ export default function GenesisWorld3D(props: Props) {
       cancelAnimationFrame(frame);
       observer.disconnect();
       controls.dispose();
+      el.removeEventListener("pointerleave", release);
+      el.removeEventListener("pointercancel", release);
       el.removeEventListener("pointerdown", start as EventListener);
       el.removeEventListener("pointerup", pick as EventListener);
       el.removeEventListener("pointermove", hover as EventListener);
@@ -687,7 +806,10 @@ export default function GenesisWorld3D(props: Props) {
     };
   }, [quality]);
   return (
-    <section className="panel world3d" id="genesis-village">
+    <section
+      className={"panel world3d" + (expanded ? " expanded" : "")}
+      id="genesis-village"
+    >
       <header>
         <div>
           <span className="eyebrow">Weather · {props.state.life.weather}</span>
@@ -698,20 +820,57 @@ export default function GenesisWorld3D(props: Props) {
           value={quality}
           onChange={(e) => setQuality(e.target.value)}
         >
+          <option value="auto">Auto graphics</option>
           <option value="low">Low graphics</option>
-          <option value="balanced">Balanced graphics</option>
+          <option value="balanced">Medium graphics</option>
           <option value="high">High graphics</option>
         </select>
       </header>
       <div className="world3d-tools">
-        <button onClick={() => api.current?.view("iso")}>Sky view</button>
-        <button onClick={() => api.current?.view("street")}>Street view</button>
+        <button aria-pressed={expanded} onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Close large view" : "Open large view"}
+        </button>
+        <button onClick={() => api.current?.view("iso")}>
+          {streetView ? "Return to Sky" : "Sky view"}
+        </button>
+        <button
+          disabled={walking}
+          onClick={() => {
+            const o = observerPresence(props.state);
+            void landAt(o.x, o.y);
+          }}
+        >
+          Enter Street View
+        </button>
+        <button
+          aria-pressed={landing}
+          onClick={() => {
+            api.current?.view("iso");
+            landingRef.current = !landingRef.current;
+            setLanding(landingRef.current);
+            setWalkStatus(
+              "Tap a clear road or sidewalk in the village to land.",
+            );
+          }}
+        >
+          {landing ? "Cancel landing" : "Choose a road to land"}
+        </button>
         <button onClick={() => api.current?.view("look-left")}>
           Look left
         </button>
         <button onClick={() => api.current?.view("look-right")}>
           Look right
         </button>
+        {streetView && (
+          <>
+            <button onClick={() => api.current?.view("look-up")}>
+              Look up
+            </button>
+            <button onClick={() => api.current?.view("look-down")}>
+              Look down
+            </button>
+          </>
+        )}
         <button onClick={() => api.current?.view("overhead")}>
           From above
         </button>
@@ -735,28 +894,35 @@ export default function GenesisWorld3D(props: Props) {
       </div>
       {streetView && (
         <div className="world3d-tools" aria-label="Street walking controls">
-          <button disabled={walking} onClick={() => void walk(0, -5)}>
-            Step north
+          <button disabled={walking} onClick={() => void walk(0, -1.5)}>
+            Walk forward
           </button>
-          <button disabled={walking} onClick={() => void walk(0, 5)}>
-            Step south
+          <button disabled={walking} onClick={() => void walk(0, 1.5)}>
+            Walk backward
           </button>
-          <button disabled={walking} onClick={() => void walk(-5, 0)}>
-            Step west
+          <button disabled={walking} onClick={() => void walk(-1.5, 0)}>
+            Step left
           </button>
-          <button disabled={walking} onClick={() => void walk(5, 0)}>
-            Step east
+          <button disabled={walking} onClick={() => void walk(1.5, 0)}>
+            Step right
           </button>
           <span role="status">
             {walking ? "Saving your step…" : walkStatus}
           </span>
         </div>
       )}
+      {landing && (
+        <p role="status">
+          Tap a clear road, sidewalk or entrance path to land.
+        </p>
+      )}
       <div ref={host} className="world3d-stage" />
       <p className="world3d-help">
-        Street View stands at your saved Observer position; use Observer
-        Presence to walk and Look left/right to turn. Sky View: drag to look
-        around. Pinch to zoom, or use two fingers to move across the village.
+        {landing
+          ? "Tap a road or sidewalk to land. "
+          : streetView
+            ? "Drag to look around. Walk with the buttons above; buildings and the river block your path. "
+            : "Sky View: drag to rotate, pinch to zoom, or use two fingers to pan. "}{" "}
         Tap a villager or building to learn more.{" "}
         {props.placement ? "Tap a spot to review the building cost." : ""}
       </p>
