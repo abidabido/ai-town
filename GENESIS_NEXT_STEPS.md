@@ -1,3 +1,22 @@
+## Updated construction queue — November 13, 2026
+Resume genesis/build-local-tests-20261113, test commit bb99992 (based on 867f16b). Do not repeat or undo the completed browser milestone.
+
+COMPLETED / VERIFIED: localhost Chromium wall/room/furniture interactions, normal UI Convex save, full refresh, earlier saved draft/Undo restoration and a second non-writing reload. All 17 regression scripts and build pass. Current Willow lot revision 6 includes four walls, 12 m² room, open doorway and six furniture objects; five original objects/history preserved. Reports: docs/testing/build-e2e-report.json and build-reload-report.json. Instructions: GENESIS_BUILD_TESTING.md.
+
+1. IN PROGRESS — Manual touchscreen acceptance. Dependency: Abby's actual iPad/iPhone and authorized private preview access. No app code changes needed to start. Follow GENESIS_BUILD_TESTING.md; verify finger wall/room drawing, correct release, tap selection, pinch/rotation, save/refresh and easy exit in portrait/landscape. Record device, browser and observed result. Do not call Chromium viewport testing a physical-device pass. Keep port private.
+
+2. NOT STARTED — Cutaway/dollhouse visibility. Files: BuildBuy.tsx, BuildScene.tsx, BuildArchitectureObjects.ts. Add walls up/partial/down as display-only controls; underlying walls, doorway collision data and saved designs must remain unchanged. Acceptance: actual browser toggles expose coffee table/floor, saved record remains identical; save/reload geometry preserved; all 17 scripts plus opt-in reload check pass.
+
+3. NOT STARTED — Small furnishing/finish improvement. Files: BuildObjects.ts, BuildArchitecture.tsx, genesisBuild.ts. Add a few original polished items/materials without decorative claims of NPC functionality. Acceptance: actual placement/rotation/collision and reloading; no paid assets or unnecessary dependencies.
+
+4. NOT STARTED — Enterable house. Dependency: doorway/collision topology, valid world placement and actual Street View route checks. Do not wire household or citizen use until those pass. Acceptance: no wall/furniture penetration, valid eye height and real entrance/exit; then real citizen object action records.
+
+Safe rerun: GENESIS_PLAYWRIGHT_MODULE=/tmp/genesis-e2e/node_modules/playwright node scripts/e2e-genesis-build.cjs --reload-only. It is non-writing. The one-save construction mode intentionally refuses an existing walled lot; never wipe or replace the saved room just to rerun a test.
+
+Private local artifacts/backups remain in ignored .genesis-test-artifacts/. Preserve existing untracked convex/README.md and real product artifacts. Test browser setup used official Playwright and Chromium with standard system libraries; no application package/lock changes, public hosting or paid API.
+
+---
+
 ## Next construction work — November 13, 2026
 Resume branch genesis/build-rooms-20261113, code c60cfc7. Read current checkpoints before older tasks below.
 

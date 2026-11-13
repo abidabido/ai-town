@@ -1,3 +1,28 @@
+## Localhost browser acceptance checkpoint — November 13, 2026
+Branch: genesis/build-local-tests-20261113. Latest verified code/test commit: bb99992. Based on 867f16b. This supersedes the prior “browser verification BLOCKED” status for LOCALHOST testing only; the cloud forwarded-preview redirect remains inaccessible.
+
+VERIFIED — Real browser workflow: official Playwright installed outside the repo at /tmp/genesis-e2e; Chromium 159.0.8154.6 plus standard Linux libraries installed in the Codespace. Tests ran against http://localhost:5173/ai-town#genesis-build using the actual React UI and Three.js WebGL canvas. The browser was not the blocked cloud preview and no forwarded authentication was bypassed.
+
+Passed: opening Build Mode; pointer-drag wall drawing; Undo/Redo; selected wall deletion; rectangle drawing with four walls and a 12 m² floor; adding a valid open doorway; wall/floor colour updates; furniture placement inside room; normal UI Save against the real Convex development backend; full page refresh/reconstruction; earlier saved version loaded as a draft; Undo returning to the current design; phone-size 390×844 reachable 44×44 construction control; no uncaught browser errors. Exact world-state equality before/after verifies no changes to citizens, simulation time, finances, memories or relationships.
+
+Saved lot revision is now 6: all five original objects are unchanged, plus one coffee table at (-0.5,-3.5), four walls enclosing a 4×3 m room and one central open doorway. All original saved history versions were retained. No existing structure was demolished or replaced. The baseline and post-save records remain under ignored .genesis-test-artifacts/. The isolated design lot remains unoccupied and not walkable by citizens.
+
+Second automated --reload-only run PASS: two loads of the existing design, wall/object counts, room/doorway status, exact saved colours, unchanged database lot and unchanged village state. This mode writes no data and is safe to repeat on the current acceptance fixture. The single-save drawing test refuses lots already containing walls; do not wipe a build to repeat it.
+
+All 17 existing verification scripts passed again, npm run build PASS (8.72 s), git diff --check PASS, syntax check of the opt-in runner PASS. No production application defect was found; only test safeguards were corrected to use the app's visible stopped-playback state rather than assuming life.paused=true. The UI starts playing=false; no Play/Advance command was executed.
+
+Private access preserved: Codespace Ports panel explicitly showed 5173 Private with the existing Vite process. No public deployment, authentication weakening, new credentials, paid API or paid research was enabled. package.json/package-lock.json unchanged. Official test browser dependencies are outside the repo; local backups and screenshots are excluded from Git.
+
+Evidence: scripts/e2e-genesis-build.cjs; docs/testing/build-e2e-report.json; docs/testing/build-reload-report.json; ignored .genesis-test-artifacts/build-restored.png and build-phone.png. GENESIS_BUILD_TESTING.md has reproducible setup and simple manual steps.
+
+MANUAL verification still pending: physical iPad/iPhone Safari, actual touch wall drawing, multi-touch pinch/twist, portrait/landscape comfort, mobile GPU performance and the forwarded sign-in flow. Automated Chromium and a resized viewport do not verify those. Walkable interiors, citizen navigation/furniture use, operating doors, roofs and multi-storey builds remain unfinished.
+
+Run existing frontend on private port 5173. Private preview location: https://redesigned-dollop-vgq5599rxw6hjpr-5173.app.github.dev/ai-town#genesis-build . Keep Codespace awake, use authorized GitHub sign-in, then BUILD & DECORATE. This location was confirmed in Ports configuration; the forwarded flow was not opened by the agent this session.
+
+Next: physical-device manual acceptance, then display-only cutaway walls to expose furnished rooms. Preserve saved revision 6 and earlier versions. Do not restart the project.
+
+---
+
 ## Build & Decorate — walls and rooms checkpoint — November 13, 2026
 Branch: genesis/build-rooms-20261113. Latest verified code commit: c60cfc7. This checkpoint supersedes older construction status below.
 

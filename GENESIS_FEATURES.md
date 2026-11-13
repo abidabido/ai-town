@@ -1,3 +1,29 @@
+## Current browser acceptance status — November 13, 2026
+Branch genesis/build-local-tests-20261113; verified test commit bb99992, app baseline 867f16b. This table supersedes earlier localhost browser-blocked entries.
+
+| Feature | Status | Actual verification |
+| --- | --- | --- |
+| Application and Build Mode launch | VERIFIED | Real Chromium inside Codespace on localhost; actual React UI and WebGL canvas. |
+| Draw wall, undo, redo, delete | VERIFIED | Normal browser pointer/button interactions, no simulated success. |
+| Rectangular room and floor | VERIFIED | Drag creates four walls and one 12 m² enclosed room. |
+| Basic open doorway | VERIFIED | Normal UI adds doorway; saved/reloaded status plus existing real-mesh raycast tests. Not an operating door leaf. |
+| Wall/floor paint | VERIFIED | UI colour changes; saved values restore on read-only reload. |
+| Furniture inside room | VERIFIED | Coffee table placed by normal pointer interaction; six actual saved objects. |
+| Real backend persistence and refresh | VERIFIED | UI Save writes Convex revision 6; full refresh restores the same structured design. |
+| Existing items and history preserved | VERIFIED | All five original object records equal; every prior saved version retained. |
+| Earlier design draft and restoration | VERIFIED | Load version 5 as draft, Undo back to saved building; no extra DB write. |
+| Repeatable non-writing browser check | VERIFIED | --reload-only passes, saved lot and village state unchanged. |
+| Existing village integrity | VERIFIED | Exact simulation state equality before/after, no uncaught browser errors; all 17 regression scripts pass. |
+| Phone-size control layout | VERIFIED | Chromium 390×844, reachable construction control ≥44×44. Scope is this responsive check only. |
+| Real iPad/iPhone Safari and multi-touch | IMPLEMENTED | Pointer/responsive code exists; physical-device and pinch/twist acceptance NOT verified. |
+| Private port and authentication unchanged | VERIFIED | Codespace Ports panel shows 5173 Private; no visibility or authentication changes made. |
+| Forwarded preview sign-in in cloud browser | BLOCKED | Cloud browser policy still blocks that flow; no workaround attempted against that URL. |
+| Walkable interiors / citizen furniture actions | NOT STARTED | Not established by these construction tests. |
+
+Automated browser verification is complete for the tested construction workflow. Manual physical-device verification remains pending. No claim of full Build & Buy completion.
+
+---
+
 ## Current construction status — November 13, 2026
 Code: c60cfc7 on genesis/build-rooms-20261113. This table supersedes older construction entries.
 
