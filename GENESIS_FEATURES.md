@@ -1,3 +1,23 @@
+# Current touch-navigation milestone — November 12, 2026
+Verified implementation 8a80a86; branch genesis/touch-navigation-20261112. Status describes the stated scope only.
+
+| Feature | Status | Verification / limits |
+| --- | --- | --- |
+| Hold-to-walk, steering and release | VERIFIED | Deterministic controller tests; native mouse hold changed saved live coordinates and release kept them stable |
+| Tap/hold/look/pinch intent separation | VERIFIED | Automated input-state tests, including protected objects and multi-pointer interruption; physical touch still untested |
+| One-finger Sky pan / pinch zoom / two-finger rotation | IMPLEMENTED | Existing OrbitControls touch mapping; no native multi-touch tool or physical device test |
+| Safe Sky-to-Street flight and zoom threshold | VERIFIED (browser zoom buttons) | Actual live zoom entered Walk Mode on a validated road; native pinch still needs device acceptance |
+| Street look and safe pitch | VERIFIED (mouse/logic) | Live right-side drag changed view without moving Observer; clamp in renderer |
+| Movement collision | VERIFIED (supported geometry) | Shared swept building, river, bridge, bench and planter tests; trees/full terrain/interiors remain incomplete |
+| Single in-flight saving / honest rejection | VERIFIED | Controller failure/flush/rate tests; success requires server ok; rollback on failure |
+| Touch settings and optional movement pad | VERIFIED (settings/logic) | Toggle persisted through reload; optional pad intent tested; real thumb usability not measured |
+| Citizen selection and Follow | VERIFIED (selection/control) | Mara inspector matched and did not move Observer; manual movement exits following; live moving-citizen follow not newly stress-tested |
+| Existing civilization | VERIFIED | All 13 verification scripts and production build pass; no world reset or simulated time advance during browser tests |
+| Physical iPad/iPhone and Safari gestures | BLOCKED | No physical device/native multi-touch access; do not label as passed |
+
+Earlier feature checklists follow.
+
+---
 # Current visual milestone — November 12, 2026
 Implementation a566b39, branch genesis/visual-revolution-20261112. Statuses apply to the exact scope described, not the entire requested Visual Revolution.
 

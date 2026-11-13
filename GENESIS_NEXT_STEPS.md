@@ -1,3 +1,15 @@
+# Next work — Touch Navigation
+Current branch genesis/touch-navigation-20261112; verified implementation 8a80a86. Preserve all 14 current residents, conversations, relationships, research, Observer records and product artifacts. Prior graphics/business backlog remains below, but touch navigation is the immediate priority.
+
+1. Physical iPad/iPhone acceptance: GenesisWorld3D.tsx, GenesisTouch.ts, Genesis3D.css. Test actual one-finger pan, native pinch/twist, automatic threshold, staged flight, hold/steering/release, right-side look, interactive-object tap, optional pad, portrait/landscape, outside-page scrolling, Safari long-press behavior, interruption/background/resume and browser refresh. Record actual device/FPS only when measured. Current cloud has SVG fallback and native mouse checks, not physical touch proof.
+2. Concurrent simulation/network test: SavedWalker and convex/genesis.ts observerPresenceAction. Keep one in-flight write and the bounded 500 ms cadence. Add at most one conflict retry using a fresh confirmed revision and revalidated path; reject changed obstacles or stale coordinates. Test village ticks while holding, delayed responses, rejection after release, unmount while pending and no lost/duplicate final movement. Do not weaken validation or silently retry forever.
+3. Camera/input integration tests: add a supported headless/native browser harness when available without paid services. Exercise DOM pointer capture, lost capture, labels/menu cancellation, actual multi-touch OrbitControls mapping, focus/double-tap road raycasts, zoom-out return, native page scroll outside canvas and Follow-to-manual transitions. Pure intent and persistence tests already exist; do not describe them as Safari hardware tests.
+4. Refine camera feel after physical testing: reduce unnecessary clearance rise only when a collision-free route is proven; preserve eye height and pitch limits. Test high/low graphics and fallback responsiveness. Add better sky-target bounds if users can pan too far. Keep the Auto Street toggle and saved preferences.
+5. Physics completeness: unify remaining tree/prop placement with shared colliders before calling every solid object blocking. Existing benches, garden/raised beds, buildings, river and bridge rails are covered. Avoid invisible colliders when quality hides scenery. Enterable library still NOT STARTED and should follow stable touch navigation.
+
+Run all 13 scripts/verify-genesis{,-commands,-life,-backend,-families,-products,-memory,-friendly,-inquiry,-presence,-digital,-graphics,-touch}.cjs plus npm run build and git diff --check. Sync only the existing Convex development configuration after tests. Keep port 5173 private, no paid services. Do not stage pre-existing untracked convex/README.md or bakery builds. Update all three checkpoint files and commit tested changes.
+
+---
 # Next work — Visual Revolution
 Current branch genesis/visual-revolution-20261112; verified implementation a566b39. Preserve the existing 14 residents and all state. Graphics are the current priority; earlier business/social backlog below is deferred.
 
