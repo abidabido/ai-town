@@ -1,3 +1,20 @@
+## Build & Decorate — next tasks, November 13, 2026
+
+Resume branch genesis/build-buy-20261113, verified code cb93630. Read the newest progress section first. Preserve the medical milestone and all existing civilization data. Do not restart the app.
+
+1. **Walls and rooms — NOT STARTED, highest priority.** Relevant files: data/genesisBuild.ts, BuildScene.tsx, BuildObjects.ts, BuildBuy.tsx, convex/buildLots.ts, schema.ts, verify-genesis-build.cjs. Extend structured design schema additively; migrate/read v1 furniture without loss. Add snapped wall-drag ghost previews, axis-aligned segments, junction handling and rectangle-room creation, closed-room recognition and floor geometry. Dependency: verified lot validation/save/history remains stable. Acceptance: finger/pointer drag produces measured 3D walls; rectangle creates consistent room/floor; undo restores prior geometry; invalid intersections rejected; save/reload preserves v1 furniture plus new geometry.
+2. **Doors / access validation — NOT STARTED.** Add wall-bound doors that actually remove the corresponding wall geometry, not decorative textured doors. Validate dimensions, placement and entrance clearance. Acceptance: door exists only in a compatible segment; collision geometry has a traversable gap; inaccessible rooms are flagged; door persists and undo works.
+3. **Saved house exploration — NOT STARTED.** Integrate one lot into village coordinates only after door/navigation checks exist. Keep render and collision derived from the same design. Files also GenesisWorld3D.tsx, GenesisTouch.ts and shared observerCanWalk/navigation. Acceptance: saved layout reconstructed in village, eye-height camera enters/exits through actual door and cannot cross walls/furniture. Avoid claiming NPC routing is fixed by camera collision alone.
+4. **Households and furniture actions — NOT STARTED.** Connect existing people/households without deleting family histories. Define supported actions against furniture IDs and reachable approach points, reservations and recorded activity. Acceptance: assigned adult travels to the lot and performs one supported recorded action; no decorative animation presented as completed work/sleep.
+5. **Mobile/GPU verification — PENDING.** Test real pinch/capture interruption, portrait and landscape scrolling, catalog usability, modal focus and return to village on Safari/iPad. Current cloud browser uses actual 3D SVG fallback because WebGL is unavailable. Test WebGL and 30–60 furnished objects on a real device before marking performance verified. Existing model caps 60 objects; no FPS promise.
+6. **Templates, roofs and additional lots — NOT STARTED.** Only after reliable single-floor homes. Add editable structured templates, then roof/cutaway views. Multi-story access must wait for stairs and citizen routing.
+
+Current save behavior: one isolated Willow lot per world, creative/no charge, 30 local undo states, latest five previous saves retained. No residents, no main-world demolition. Lot archive is separate from village checkpoint restores; explicitly decide future timeline isolation before coupling it to multiverse/checkpoints. Preserve revision conflict checks and canonical server validation. Existing prototype admin auth remains incomplete; keep port private.
+
+Verification commands: node scripts/verify-genesis-build.cjs; all scripts/verify-genesis*.cjs; npm run build; git diff --check. Use actual browser pointer interactions and saved-record reload, not mock screenshots. Run developer backend sync only, no production deployment or paid assets.
+
+---
+
 ## Next medical milestone — November 13, 2026
 
 Start from genesis/medical-review-20261112, verified code c257562. Preserve all prior touch/graphics/social work and the live medical review. Read GENESIS_PROGRESS.md first.

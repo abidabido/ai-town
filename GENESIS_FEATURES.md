@@ -1,3 +1,33 @@
+## Build & Buy status — November 13, 2026
+
+Verified code cb93630 on genesis/build-buy-20261113. This is the isolated lot foundation, not the entire requested house-building system.
+
+| Feature | Status | Acceptance evidence |
+|---|---|---|
+| Build & Decorate opens | VERIFIED | Live native modal inside existing application |
+| One selectable editable lot | VERIFIED | Willow, 12 × 12 m, unoccupied ground floor |
+| Real 3D objects and grid | VERIFIED | Three.js meshes, footprint tests, live geometry projection and camera rotation |
+| Place / select / move / rotate | VERIFIED | Live pointer placement, raycast selection, drag and 90-degree edits |
+| Delete / duplicate / undo / redo | VERIFIED | Live object counts and restored geometry; pure history tests |
+| Original furniture catalog | VERIFIED | Seven actual mesh models; sofa/desk/bookshelf/planter placed live |
+| Paint object colors | VERIFIED | Swatch action and saved color survives refresh |
+| Lot database persistence | VERIFIED | Saved version 5 reconstructs five objects after reload |
+| Save conflict and history recovery | VERIFIED | Server stale-revision tests; earlier version loaded as draft and undone live |
+| Boundary / overlap rejection | VERIFIED | Server/pure tests and actual UI rejection without editor crash |
+| Existing civilization preserved | VERIFIED | All prior suites pass; citizen count, time, money and research UI retained |
+| Touch / responsive layout | IMPLEMENTED | Pointer input, modal isolation, canvas-only gesture handling, adaptive CSS; physical Safari and real multi-touch not verified |
+| WebGL GPU rendering | IMPLEMENTED | Cloud WebGL unavailable; actual 3D SVG compatibility path verified |
+| Walls / rectangle rooms / floors / doors | NOT STARTED | Next milestone; do not claim a finished house |
+| Windows / roofs / multi-floor construction | NOT STARTED | Depends on single-floor rooms and openings |
+| Enterable saved home | NOT STARTED | No Street View or navigation connection to design lot |
+| Citizen household / furniture use | NOT STARTED | Decorative objects only; no fabricated citizen interactions |
+| Main village lot placement / renovation | NOT STARTED | Existing buildings intentionally preserved; design lot isolated |
+| Advanced paint / landscaping / house templates | NOT STARTED | Object colors and planter placement only |
+
+All 16 verification scripts, final build and diff checks passed. See progress for live steps and limitations.
+
+---
+
 ## Medical Initiative — verified November 13, 2026
 
 Verified code: c257562 on genesis/medical-review-20261112.

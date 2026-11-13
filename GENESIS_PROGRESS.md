@@ -1,3 +1,27 @@
+## Build & Decorate checkpoint — November 13, 2026
+
+Branch: genesis/build-buy-20261113. Latest verified code commit: cb93630. Based on the medical checkpoint 5268bf0; preserves the entire existing village, Atlas lab and earlier touch/social/graphics systems.
+
+Milestone one is working: BUILD & DECORATE opens a native modal construction workspace inside Genesis. One 12 × 12 meter, ground-floor Willow design lot is selectable. It is an isolated unoccupied design workspace, NOT a relocated village home. Existing simulation may continue according to its existing play/pause state; no residents enter this lot, no existing structure is demolished, and no money is charged. Walking controls are outside the modal and are not used for construction gestures.
+
+Actual features: seven original procedural 3D furniture types; visible half-meter grid; pointer/touch placement with colored ghost previews; optional snapping; real raycast selection; drag-to-move; quarter-turn rotation; duplicate; delete; paint picker and four touch swatches; bounded 30-edit undo/redo; orbit camera; two-finger zoom code; catalog search; saved lot versions; unsaved-change exit warning. Versioned structured object data (IDs, kind, x/z, rotation and color) persists in additive Convex genesisBuildLots records. Bounds, overlap, catalog identity, color, quantity and revision checks are enforced on the server. Latest five previous saves retained, loadable as an undoable draft. A stale save cannot overwrite another editor. This separate design archive is not yet included in village checkpoint restore.
+
+Verified live: editor opens; sofa placement; rotation and nudge movement; actual 3D drag from position 2,1.5 to 4,0; duplicate/delete/undo/redo; overlap rejected without creating another object; out-of-bounds nudge rejected while editor remains usable; paint #617e61 survives refresh; unsaved exit warning offers Keep editing; saved version 5 reloads five real objects (two sofas, desk, bookshelf, planter). Earlier version 4 loads its two objects as a draft; Undo restores the five-object saved design. Camera rotation changes the actual projected geometry. Native modal isolates the editor from underlying page input. Existing village still has 18 citizens, paused village time Year 1 Month 4 Day 13 18:00 and funds ¤849.60; no research or citizen data was replaced.
+
+Tests: all 16 scripts/verify-genesis*.cjs PASS; npm run build PASS; git diff --check PASS; Convex development schema/function sync PASS. New scripts/verify-genesis-build.cjs verifies malformed data rejection, footprints/bounds/overlaps, edit history, actual Three.js meshes, saved geometry round trip, conflicting revisions, bounded save history and unchanged world/citizens. Original medical, economic, social, touch and graphics suites remain passing. Existing large-bundle warning remains.
+
+Rendering limitation: this cloud browser cannot create a WebGL context, so live testing used SVGRenderer projecting the actual 3D geometry; orbit and raycasting still work. WebGL rendering is implemented but not GPU-verified here. Physical iPad/iPhone, mobile Safari, real multi-touch pinch and mobile performance were NOT tested. Responsive CSS and touch-sized controls are implemented, not labeled device-verified.
+
+Not implemented: walls, enclosed rooms, door/window openings, floors/material surfaces, roofs, stories, walkable interiors, real village lot placement, household assignment, citizen furniture use, dynamic citizen routing, terrain editing or complete house templates. The saved lot is not a finished or enterable house. These are explicitly explained in the UI. Do not advertise later milestones as done.
+
+Files: data/genesisBuild.ts; convex/buildLots.ts; convex/schema.ts; src/components/BuildBuy.tsx, BuildScene.tsx, BuildObjects.ts, BuildBuy.css; small navigation/launcher integration in Genesis.tsx. GENESIS_ASSETS.md records original assets. No new dependencies, paid assets or API services. Existing untracked README/product build files preserved.
+
+Run: npm run dev:frontend -- --host 0.0.0.0, port 5173 private; ./node_modules/.bin/convex dev --once for authorized development sync. No new environment variables. Preview: https://redesigned-dollop-vgq5599rxw6hjpr-5173.app.github.dev/ai-town#genesis-build ; press BUILD & DECORATE. Codespace must be awake. Existing prototype backend multi-user admin auth is incomplete; keep private and do not publicly deploy.
+
+Next priority: milestone two — additive walls/rooms model, touch wall and rectangle tools, floors and valid door openings; preserve saved v1 furniture data and test all geometry before exposing citizen navigation.
+
+---
+
 ## Medical research checkpoint — November 13, 2026
 
 Branch: genesis/medical-review-20261112. Latest verified code commit: c257562 (medical pilot 8b0adb4). This checkpoint supersedes older launch/research status below without removing that history.
