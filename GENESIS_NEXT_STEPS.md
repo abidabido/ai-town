@@ -1,3 +1,15 @@
+# Next work — Visual Revolution
+Current branch genesis/visual-revolution-20261112; verified implementation a566b39. Preserve the existing 14 residents and all state. Graphics are the current priority; earlier business/social backlog below is deferred.
+
+1. Review current village on a real WebGL-capable iPad/iPhone. Files: GenesisWorld3D.tsx, GenesisEnvironment.ts, Genesis3D.css. Test Auto/Low/Medium/High, rotate/pan/pinch, road landing, heading-relative walking, up/down looking, blocked buildings, bridges, citizen/building tap, profile visibility and Return to Sky. Record actual FPS/device only if measured. Current cloud is SVG compatibility only.
+2. Implement one true enterable library after checkpointing. Files: data/genesisLife.ts shared footprints/movement; GenesisEnvironment.ts archive geometry; GenesisWorld3D.tsx camera/raycast; ObserverPresence.tsx. Define doorway/interior floor/walls and a validated indoor position flag, furnish one room, allow entering/exiting through the door and prove camera collision. Do not bypass existing whole-building collision by simply teleporting through walls. Citizens may only appear inside when saved location/activity supports it. Acceptance: enter, walk, inspect supported real activity, exit; no wall/river tunneling; position survives refresh; no other records lost.
+3. Improve road-junction geometry and SVG near-plane behavior. Keep shared road/bridge dimensions and swept validators. Avoid overlapping curbs/road tiles at intersections; update entrance paths on new construction without rebuilding the whole simulation. Acceptance: screenshot coherent crossroads from eye level and overhead, no mismatched bridge access, all existing suites pass. SVG is a fallback; do not silently drop 3D support on GPU browsers.
+4. Improve activity animation in small verified increments: actual face-to-face conversation orientation, phone hand pose, sitting only with supported seat/location data. Existing props must remain gated by recorded activity. Build pathfinding for actual destination travel before claiming citizens follow sidewalks. Preserve profile colors/styles and do not add fake work or decorative conversations.
+5. Add atmosphere only after core exploration is stable: review hour 0/6/12/18 screenshots in fixtures, then bounded rain tied to saved weather, optional shadows/particles by quality, no new paid assets. Keep original asset credits in GENESIS_ASSETS.md.
+
+Run all 12 scripts/verify-genesis{,-commands,-life,-backend,-families,-products,-memory,-friendly,-inquiry,-presence,-digital,-graphics}.cjs, npm run build, git diff --check. Current friendly suite compares baseline 12c1315. Never stage pre-existing untracked convex/README.md or product builds. Keep port private; no paid calls or public deployment. Maintain all three checkpoint files and commit verified milestones.
+
+---
 # Next work — Connected Civilization · November 12, 2026
 
 Current branch genesis/connected-social-20261112; verified code 23fc53b. Milestones 1–3 work. Read latest sections of all three checkpoint files; preserve 14 citizens, all transcripts, Observer settings, investigations and private products.

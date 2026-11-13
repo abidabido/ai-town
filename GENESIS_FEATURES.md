@@ -1,3 +1,24 @@
+# Current visual milestone — November 12, 2026
+Implementation a566b39, branch genesis/visual-revolution-20261112. Statuses apply to the exact scope described, not the entire requested Visual Revolution.
+
+| Feature | Status | Evidence / limits |
+| --- | --- | --- |
+| Existing app launch and saved civilization | VERIFIED | Private browser app loaded 14 residents; all 12 suites and build passed; no migration/reset |
+| Original architectural and landscape geometry | VERIFIED | Real browser screenshot and mesh tests; coherent scale, trim, gables, broad-leaf trees, roads and bridge decks |
+| Street path landing and walking | VERIFIED | Browser path tap, saved step, look/sky return; deterministic swept collision/river/bridge tests |
+| Correct citizen selection | VERIFIED | Camera gesture capture fixed; Mara/Dax inspectors matched labels; label spacing avoids overlap |
+| Sky / overhead / follow / large view | IMPLEMENTED | Sky/large/follow controls exercised; physical touch gestures and every camera angle not exhaustively tested |
+| Human scale and persistent appearance mapping | VERIFIED | Mesh bounds test and saved profile preservation; original clothing/hair/skin fields reused |
+| Activity props / poses | IMPLEMENTED | Phone/book/meal props gated by saved activity and movement; not a complete animation library |
+| Day/night lighting and glowing windows | IMPLEMENTED | Uses actual calendar; night screenshot and hardware shadows still need review |
+| Adaptive graphics / instancing / idle fallback | IMPLEMENTED | Geometry tests prove GPU instancing; compatibility browser reviewed; real device profiling incomplete |
+| One enterable library and interior collision | NOT STARTED | No decorative Enter button or false interior claim |
+| Rain particles / seasons / audio | NOT STARTED | Existing weather state and sky tint preserved |
+| Physical iPad/iPhone compatibility | BLOCKED | No physical device access in this session; responsive CSS/44 px core controls implemented |
+
+Earlier feature checklists remain below.
+
+---
 # Current feature status — Connected Civilization · November 12, 2026
 
 Branch genesis/connected-social-20261112; verified code 23fc53b. These statuses supersede older digital-life entries.
