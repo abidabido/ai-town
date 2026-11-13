@@ -45,9 +45,9 @@ export default function ResearchLibrary({ state }: { state: LivingState }) {
         changed their minds.
       </p>
       <p className="muted">
-        Village research only. Real-world research and browsing are not
-        connected. This first pilot studies harvest patterns; other subjects are
-        still on the way.
+        This library follows fictional village experiments. For real published
+        studies, open Atlas’s Lab. This in-world pilot studies harvest patterns;
+        other village research subjects are still on the way.
       </p>
       <label>
         Find an investigation
