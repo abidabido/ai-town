@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "steps": [
+    "Sage profile opens a clearly labelled limited conversation dialog.",
+    "Two-way exchange saves to actual Convex and uses Sage’s recorded activity without revealing Abby.",
+    "Follow-up response recalls the actual preceding player message.",
+    "The Feeling produces unidentified communication, not automatic creator recognition.",
+    "Full page refresh restores the persistent conversation and its timestamps/channel metadata.",
+    "Only Sage gains conversation memories; time, funds, trust, Observer awareness and other citizens stay unchanged.",
+    "Phone-size dialog has a reachable touch-sized send control."
+  ],
+  "engine": "rules-v1",
+  "languageModelUsed": false,
+  "physicalDeviceTest": false,
+  "messages": 6,
+  "browser": "159.0.8154.6"
+}

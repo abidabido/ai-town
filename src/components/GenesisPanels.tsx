@@ -61,8 +61,10 @@ export function CitizenPanel({
   id,
   events,
   onClose,
+  onTalk,
 }: {
   state: LivingState;
+  onTalk: () => void;
   id: number;
   events: LifeEvent[];
   onClose: () => void;
@@ -118,6 +120,9 @@ export function CitizenPanel({
         </div>
         <button onClick={onClose}>Close</button>
       </div>
+      <button className="talk-to-citizen" onClick={onTalk}>
+        TALK TO CITIZEN
+      </button>
       <h3>About Me</h3>
       <p>
         {c.name} is a {age}-year-old {p.job.toLowerCase()}

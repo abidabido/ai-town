@@ -1,3 +1,4 @@
+import CitizenTalk from "./CitizenTalk";
 import BuildBuy from "./BuildBuy";
 import MedicalResearchLab from "./MedicalResearchLab";
 import "./MedicalResearchLab.css";
@@ -42,6 +43,7 @@ type Pending = {
   message: string;
 };
 export default function Genesis() {
+  const [talkCitizen, setTalkCitizen] = useState<number | undefined>();
   const current = useQuery(api.genesis.current),
     state = current?.state;
   const [selected, setSelected] = useState<number>(),
@@ -755,11 +757,18 @@ export default function Genesis() {
                 increase observations.
               </span>
             </div>
+            <CitizenTalk
+              state={state}
+              worldId={current!.id}
+              citizen={talkCitizen}
+              onClose={() => setTalkCitizen(undefined)}
+            />
             <BuildBuy worldId={current!.id} />
             <div className="layout">
               <div>
                 <GenesisWorld
                   revision={current!.revision}
+                  onTalk={() => setTalkCitizen(selected)}
                   state={state}
                   selected={selected}
                   playing={playing}
@@ -836,6 +845,7 @@ export default function Genesis() {
                   <CitizenPanel
                     state={state}
                     id={selected}
+                    onTalk={() => setTalkCitizen(selected)}
                     events={(events || []) as LifeEvent[]}
                     onClose={() => setSelected(undefined)}
                   />

@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "steps": [
+    "Sage profile opens a clearly labelled limited conversation dialog.",
+    "Existing conversation survives a full refresh with no database or village changes."
+  ],
+  "engine": "rules-v1",
+  "languageModelUsed": false,
+  "physicalDeviceTest": false,
+  "mode": "read-only",
+  "messages": 6,
+  "browser": "159.0.8154.6"
+}

@@ -1,0 +1,132 @@
+.citizen-talk {
+  width: min(760px, calc(100vw - 24px));
+  max-height: 92dvh;
+  overflow: auto;
+  border: 1px solid #c4cbb9;
+  border-radius: 22px;
+  background: #faf8ef;
+  color: #203f37;
+  padding: 20px;
+  box-shadow: 0 18px 80px #0006;
+}
+.citizen-talk::backdrop {
+  background: #102923aa;
+}
+.citizen-talk header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.citizen-talk h2 {
+  margin: 5px 0 16px;
+}
+.citizen-talk button,
+.citizen-talk select {
+  min-height: 44px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: 1px solid #9bac9e;
+  background: #edf1e5;
+  color: #203f37;
+  font-size: 1rem;
+}
+.citizen-talk button:disabled {
+  opacity: 0.5;
+}
+.citizen-talk label {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.citizen-talk .talk-check {
+  display: flex;
+  align-items: center;
+}
+.citizen-talk input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.citizen-talk textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  padding: 12px;
+  border: 1px solid #9bac9e;
+  border-radius: 12px;
+  background: white;
+  color: #203f37;
+}
+.citizen-talk .talk-limit {
+  padding: 12px;
+  background: #ece1bd;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+.citizen-talk .talk-history {
+  max-height: 42dvh;
+  min-height: 100px;
+  overflow: auto;
+  padding: 6px;
+  background: #f2f0e6;
+  border-radius: 14px;
+}
+.citizen-talk article {
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 14px;
+  background: #e2e9de;
+  overflow-wrap: anywhere;
+}
+.citizen-talk article.talk-player {
+  margin-left: 24px;
+  background: #eee2ce;
+}
+.citizen-talk article p {
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+.citizen-talk small {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+.citizen-talk .talk-suggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.citizen-talk .talk-fine {
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.citizen-talk summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+.talk-to-citizen {
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #dce7d3;
+  color: #183f33;
+  border: 1px solid #9bac9e;
+  font-weight: 700;
+}
+@media (max-width: 600px) {
+  .citizen-talk {
+    padding: 12px;
+  }
+  .citizen-talk header {
+    align-items: flex-start;
+  }
+  .citizen-talk .talk-history {
+    max-height: 35dvh;
+  }
+  .citizen-talk .talk-suggestions button {
+    flex: 1 1 45%;
+  }
+}

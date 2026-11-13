@@ -21,7 +21,10 @@ import {
   buildVillageEnvironment,
   buildCitizen,
 } from "./GenesisEnvironment";
-type Props = ComponentProps<typeof GenesisWorld> & { revision: number };
+type Props = ComponentProps<typeof GenesisWorld> & {
+  revision: number;
+  onTalk?: () => void;
+};
 const touchPreferences = () => {
   try {
     return JSON.parse(localStorage.getItem("genesis-touch-settings") ?? "{}");
@@ -1156,6 +1159,13 @@ export default function GenesisWorld3D(props: Props) {
       <div className="world3d-tools" aria-label="Village camera controls">
         <button aria-pressed={expanded} onClick={() => setExpanded(!expanded)}>
           {expanded ? "Close large view" : "Open large view"}
+        </button>
+        <button
+          className="talk-to-citizen"
+          disabled={props.selected === undefined}
+          onClick={props.onTalk}
+        >
+          TALK TO CITIZEN
         </button>
         <button onClick={() => api.current?.view("iso")}>Sky View</button>
         <button
