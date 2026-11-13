@@ -43,6 +43,7 @@ import type * as genesisProducts from "../genesisProducts.js";
 import type * as genesisStudio from "../genesisStudio.js";
 import type * as http from "../http.js";
 import type * as init from "../init.js";
+import type * as medical from "../medical.js";
 import type * as messages from "../messages.js";
 import type * as music from "../music.js";
 import type * as testing from "../testing.js";
@@ -99,6 +100,7 @@ declare const fullApi: ApiFromModules<{
   genesisStudio: typeof genesisStudio;
   http: typeof http;
   init: typeof init;
+  medical: typeof medical;
   messages: typeof messages;
   music: typeof music;
   testing: typeof testing;

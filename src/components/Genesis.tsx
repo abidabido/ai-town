@@ -1,3 +1,5 @@
+import MedicalResearchLab from "./MedicalResearchLab";
+import "./MedicalResearchLab.css";
 import ConnectedSociety from "./ConnectedSociety";
 import ObserverPresencePanel from "./ObserverPresence";
 import ResearchLibrary from "./ResearchLibrary";
@@ -479,6 +481,7 @@ export default function Genesis() {
                 ["Messages", "genesis-messages"],
                 ["WHISPER", "genesis-whisper"],
                 ["Research Library", "genesis-research"],
+                ["Atlas’s Lab", "genesis-medical-lab"],
                 ["Observer Presence", "genesis-presence"],
                 ["What’s Happening", "genesis-news"],
                 ["The Observatory", "genesis-command-center"],
@@ -906,6 +909,11 @@ export default function Genesis() {
               selected={selected}
             />
             <ResearchLibrary state={state} />
+            <MedicalResearchLab
+              state={state}
+              revision={current!.revision}
+              worldId={current!.id}
+            />
             <GenesisHelp />
             <details className="panel">
               <summary>
