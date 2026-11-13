@@ -635,6 +635,7 @@ export const observerPresenceAction = mutation({
               : "Nobody new noticed. They may be busy, out of range, or still within the quiet period."
             : "Observer changes saved.",
         noticed,
+        revision: (doc.revision ?? 0) + 1,
       };
     } catch (error) {
       return {

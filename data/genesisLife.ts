@@ -2628,6 +2628,38 @@ export function villagePaths(s: LivingState): VillageRect[] {
     ];
   });
 }
+export const VILLAGE_SOLID_PROPS: VillageRect[] = [
+  ...[
+    [-11, 5],
+    [12, 5],
+    [-6, -10],
+    [9, -10],
+  ].map(([x, z]) => ({
+    x1: x + 48.75,
+    x2: x + 51.25,
+    y1: z + 49.39,
+    y2: z + 50.55,
+  })),
+  ...[
+    [-9, -8],
+    [10, -8],
+    [-9, 16],
+    [10, 16],
+  ].map(([x, z]) => ({
+    x1: x + 47.6,
+    x2: x + 52.4,
+    y1: z + 48.65,
+    y2: z + 51.35,
+  })),
+  ...[-2.3, 2.3].flatMap((x) =>
+    [-1.8, 1.8].map((y) => ({
+      x1: PLACES.gardens.x + x - 1.45,
+      x2: PLACES.gardens.x + x + 1.45,
+      y1: PLACES.gardens.y + y - 0.9,
+      y2: PLACES.gardens.y + y + 0.9,
+    })),
+  ),
+];
 export function observerCanStand(s: LivingState, x: number, y: number) {
   if (
     !Number.isFinite(x) ||
@@ -2638,8 +2670,14 @@ export function observerCanStand(s: LivingState, x: number, y: number) {
     y > 98
   )
     return false;
-  if (y > 68 && y < 76 && !(x >= 29 && x <= 35) && !(x >= 74 && x <= 80))
+  if (
+    y > 68 &&
+    y < 76 &&
+    !(x >= 29.5 && x <= 34.5) &&
+    !(x >= 74.5 && x <= 79.5)
+  )
     return false;
+  if (VILLAGE_SOLID_PROPS.some((r) => containsPoint(r, x, y))) return false;
   return !villageBuildings(s)
     .filter((b) => b.type.toLowerCase() !== "gardens")
     .some((b) => Math.abs(b.x - x) < 4.05 && Math.abs(b.y - y) < 3.7);

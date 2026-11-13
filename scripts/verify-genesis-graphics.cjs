@@ -177,3 +177,18 @@ fs.rmSync(root, { recursive: true, force: true });
 console.log(
   "PASS: swept building collision, river/bridges, finite bounds, safe landings, invisible suppression, persistence, immutability and conservation",
 );
+
+assert.equal(life.observerCanStand(s, 39, 55), false, "Park bench is solid");
+assert.equal(
+  life.observerCanStand(s, 60, 66),
+  false,
+  "Raised planter is solid",
+);
+assert.equal(
+  life.observerCanStand(s, 34.8, 72),
+  false,
+  "Bridge railing keeps walkers on deck",
+);
+console.log(
+  "PASS: existing furniture, raised planters and bridge-rail clearance",
+);
