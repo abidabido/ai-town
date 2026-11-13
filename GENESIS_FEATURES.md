@@ -1,3 +1,30 @@
+## Medical Initiative — verified November 13, 2026
+
+Verified code: c257562 on genesis/medical-review-20261112.
+
+| Feature | Status | Evidence / limit |
+|---|---|---|
+| Persistent adult Dr. Atlas | VERIFIED | Existing saveCitizen action; profile remains after refresh; no duplicate citizen created |
+| Real biomedical retrieval | VERIFIED | Live official Europe PMC request returned both selected PubMed records |
+| Citation integrity | VERIFIED | PMID/source/DOI/title/abstract numeric anchors validated; missing/duplicate/mismatched records rejected |
+| Focused two-study review | VERIFIED | Source-linked abstract-level template; historic scope explicit; no claim of comprehensive or latest review |
+| Saved review and history | VERIFIED | Convex run records survive refresh; failed attempt retained; ready result reused from cache |
+| Preview and report download | VERIFIED | Browser preview; completed 5,944-byte Markdown download containing sources and limits |
+| Research usage bounds | VERIFIED | Pending deduplication, failure backoff, cache and daily quota tests |
+| Evidence-linked hypothesis | IMPLEMENTED | Seeded draft stored with constraints, alternatives and validation needs; no novelty claim; revision operations still missing |
+| Collaborator challenges | NOT STARTED | Sage and Nova roles only; no completed independent review |
+| Computational medical analysis | NOT STARTED | No patient/public/synthetic biomedical analysis executed |
+| Autonomous research scheduler | NOT STARTED | No background medical worker or paid services |
+| General medical-topic search | NOT STARTED | One fixed protocol only |
+| Medical institute 3D interior | NOT STARTED | Existing clinic/village preserved; no decorative institute claimed |
+| Hypothesis novelty and independent validation | NOT STARTED | No breakthrough/cure declarations |
+| Public publication workflow | NOT STARTED | Private draft; no publication control or external publication performed |
+| Physical iPad/iPhone verification | NOT STARTED | Touch-sized buttons and responsive CSS implemented; physical-device testing remains pending |
+
+Tests: all 15 Genesis verification scripts, medical live-payload validation, final build and whitespace checks passed. See GENESIS_PROGRESS.md for implementation and launch details.
+
+---
+
 # Current touch-navigation milestone — November 12, 2026
 Verified implementation 8a80a86; branch genesis/touch-navigation-20261112. Status describes the stated scope only.
 

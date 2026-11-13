@@ -1,3 +1,19 @@
+## Next medical milestone — November 13, 2026
+
+Start from genesis/medical-review-20261112, verified code c257562. Preserve all prior touch/graphics/social work and the live medical review. Read GENESIS_PROGRESS.md first.
+
+1. **Source-linked challenge and revision — NOT STARTED.** Files: convex/medical.ts, schema.ts, data/genesisMedical.ts, MedicalResearchLab.tsx, scripts/verify-genesis-medical*.cjs. Add validated reviewer observations with exact source IDs and citations, supporting and contradictory evidence fields, and append-only hypothesis versions. Use existing adult Sage/Nova identities; do not fabricate independent review. Acceptance: a real executed review step records its methods, challenge and limitation; a hypothesis revision preserves prior version and evidence links after refresh. Simulated character discussion is not independent scientific validation.
+2. **Generalized literature search — NOT STARTED.** Depends on citation validation and evidence-appraisal design. Separate arbitrary retrieved metadata from curated templates: NEVER apply this protocol’s fixed findings to different papers. Add bounded official API queries, pagination/search strategy, exclusion rationale, cache keys and limits; label unscreened papers accurately. Acceptance: a different question retrieves genuine identifiers, while unsupported summaries remain pending instead of inventing findings.
+3. **Synthetic computational pilot — NOT STARTED.** Depends on human-reviewed plan and sandbox boundaries. Use synthetic, clearly labeled data with reproducible seed, actual code/hash, assumptions, sensitivity tests and results. Acceptance: rerun produces same result; report says software test/synthetic data and makes no human-efficacy claim.
+4. **Bounded autonomy — NOT STARTED.** Only after evidence records/review are sound. Add opt-in scheduler with hard budgets and real hosted execution records; otherwise keep manual. Acceptance: one scheduled task actually runs within limits; unavailable worker is shown as off.
+5. **Mobile and institute integration — IN PROGRESS / NOT STARTED.** Responsive lab CSS exists, physical Safari testing pending. Connect existing clinic selection to the lab before creating new structures; no fake occupants/research animation. Acceptance: lab controls usable at phone/tablet widths; existing profiles, movement and conversations still work. New interiors remain a separate graphics task.
+
+Known limits: prototype backend admin auth is incomplete; keep forwarded port private. Medical records are an independent study archive, not part of simulation checkpoint restoration. UI shows the latest ten research runs. Current fixed review intentionally excludes newer studies/regulatory changes and is not treatment guidance. No external publication approved. No research worker continues automatically.
+
+Resume tests: node scripts/verify-genesis-medical.cjs; node scripts/verify-genesis-medical-backend.cjs; all scripts/verify-genesis*.cjs; npm run build; git diff --check. Optional --live test requires an actual official API response saved at /tmp/genesis-medical-api.json (not committed); do not substitute fixture data for live verification. See progress for the private lab URL.
+
+---
+
 # Next work — Touch Navigation
 Current branch genesis/touch-navigation-20261112; verified implementation 8a80a86. Preserve all 14 current residents, conversations, relationships, research, Observer records and product artifacts. Prior graphics/business backlog remains below, but touch navigation is the immediate priority.
 

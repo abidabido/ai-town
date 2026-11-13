@@ -1,3 +1,25 @@
+## Medical research checkpoint — November 13, 2026
+
+Branch: genesis/medical-review-20261112. Latest verified code commit: c257562 (medical pilot 8b0adb4). This checkpoint supersedes older launch/research status below without removing that history.
+
+Working: Dr. Atlas was added once through the existing validated citizen editor mutation, with age 45, fictional Doctor occupation, individual profile and zero starting-money grant. Existing citizens and funds were preserved. The actual village contained 17 citizens before Atlas; it now contains 18. Village time was already paused at Year 1, Month 4, Day 13, 18:00; no time advancement was needed for the review.
+
+The new Atlas’s Lab navigation opens a real Convex-backed literature pilot. Its fixed research question compares reported benefit and safety in two preselected historic early-Alzheimer antibody trials (PMIDs 36449413 and 37459141). The server actually calls the official Europe PMC API, checks source/PMID/DOI/title and numeric extraction anchors, stores normalized citation metadata and a versioned source-checked summary, and exposes Preview/Download Markdown controls. This is an abstract-level focused review, NOT a systematic review, latest-literature review, autonomous scientist, novelty check, clinical recommendation or discovery.
+
+Live verification: Atlas profile persisted after reload. API run 2 was ready at 2026-11-13T16:27:56.852Z. Both citations appeared; report preview opened; the browser download completed at 5,944 bytes and contained both PMIDs and explicit NOT RUN computational status. Reload retained the same report. Check saved review returned the cached result without a new search. Failed run 1 remains in history: an HTML-stripper mistakenly swallowed a statistical less-than sign; parsing is fixed, with regression and real-response checks. No failed review was labeled ready.
+
+Implementation: data/genesisMedical.ts; convex/medical.ts; additive genesisMedicalReviews table/index in convex/schema.ts; src/components/MedicalResearchLab.tsx and .css; navigation in Genesis.tsx; research-mode explanation in ResearchLibrary.tsx. Existing backend/simulation rules were not rewritten. No new dependencies, paid API keys, external publication or production deployment.
+
+Verification: all 15 scripts/verify-genesis*.cjs passed; new medical source-integrity and backend guard suites passed; live Europe PMC payload passed validation; npm run build passed; git diff --check passed. After final research-mode wording adjustment, inquiry/friendly suites and build passed again. Build retains its pre-existing large-chunk warning. Browser screenshot verified; physical iPad/iPhone and mobile Safari NOT tested.
+
+Limits: only one fixed two-study protocol; software-seeded hypothesis stored as EARLY HYPOTHESIS, with alternatives, constraints, predictions and validation needs. Sage/Nova are pending role assignments, not completed autonomous work. Independent review, mutable evidence/hypothesis revision history, data analysis, generalized search, medical institute interiors and autonomous scheduler are NOT implemented. The lab runs only on request. No cron/background medical worker. At most two attempts per world per 24 hours, pending deduplication, five-minute failure backoff and 24-hour ready cache. Latest ten run records are shown; older records stay stored. Medical archive is separate from game checkpoint snapshots and does not roll back with village time.
+
+Run: npm run dev:frontend -- --host 0.0.0.0 (port 5173); ./node_modules/.bin/convex dev --once for authorized development function synchronization. Existing Convex configuration reused; no new environment variables. Do not print credentials. Private preview: https://redesigned-dollop-vgq5599rxw6hjpr-5173.app.github.dev/ai-town#genesis-medical-lab . Codespace must remain awake; not a permanent hosted deployment. Private port forwarding is preserved, but the prototype still lacks strong backend multi-user administrator authorization; do not expose publicly.
+
+Highest-priority next step: persist a source-linked collaborator challenge and explicit hypothesis revision, with immutable previous versions, validation and tests. Do not imply independent medical validation from simulated dialogue.
+
+---
+
 # Latest checkpoint — Touch Navigation · November 12, 2026
 Branch genesis/touch-navigation-20261112. Latest verified implementation 8a80a86, based on ed6827b/a566b39. This is the current priority; prior visual/social/product checkpoints remain below.
 
