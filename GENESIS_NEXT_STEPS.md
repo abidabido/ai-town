@@ -1,3 +1,20 @@
+## Citizen communication continuation — November 13, 2026
+Resume genesis/citizen-talk-20261113, verified code b20eca3. Read current progress/features and GENESIS_TALK_TESTING.md. Do not rebuild the existing conversation system.
+
+1. IN PROGRESS — Live face-to-face and real mobile acceptance. Files: CitizenTalk.tsx, GenesisPanels.tsx, GenesisWorld3D.tsx, genesisTalk.ts. Verify selection button, visible avatar proximity/LOS/awake constraints, proper rejection at a distance, mode identity and gesture cancellation when opening the native dialog. On a physical iPad/iPhone, send/refresh/reopen and check onscreen keyboard/scrolling. Preserve the default Feeling preference and existing awareness history. Acceptance: actual recordings reflect correct position/channel/recipient; no accidental walking or unrelated detection.
+
+2. BLOCKED — Authorized model adapter. Files: convex/citizenTalk.ts and data/genesisTalk.ts; add a bounded server action/validated result pipeline only with a verified free endpoint or explicit cost authorization. Never infer spending permission from an API key. Pass participant-only context, prior messages and evidence, never full world secrets/credentials; label engine/version per response. Acceptance: real recorded model execution, sourced context, timeout/failure recovery, no direct unvalidated state mutations, cost/rate caps. Keep the clearly marked rules fallback.
+
+3. BLOCKED — Strong real administrator authorization. Existing app/private port gating is not full backend user authentication. Protect thread queries/sends with actual owner identity before any shared/public use. Do not publish or change port visibility to test it. Acceptance: unauthorized clients denied; authorized Observer and simulated actor views separated; existing data retained.
+
+4. NOT STARTED — Queued/asleep delivery and research action proposals. Files: genesisTalk.ts plus existing inquiry/scheduling logic. A recorded suggestion goal is not an executed experiment. Acceptance: motivated citizen accepts/declines, schedules a supported validated action, and records actual outcome; no fake movement or discoveries.
+
+5. NOT STARTED — Longer archive and timeline-aware transcript inheritance. Current threads keep latest 60 messages and are partitioned by current timeline. Define explicit retention/copy rules without erasing prior records or treating private claims as global facts.
+
+Baseline: all original 17 plus verify-genesis-talk.cjs PASS; build PASS; actual Sage browser exchange and final non-writing reload PASS. Safe rerun: GENESIS_PLAYWRIGHT_MODULE=/tmp/genesis-e2e/node_modules/playwright node scripts/e2e-genesis-talk.cjs --read-only. Omit the flag only if intentionally recording additional test exchanges. Keep screenshots and backups in ignored .genesis-test-artifacts/; aggregate reports are in docs/testing/. Preserve existing untracked README/product build artifacts.
+
+---
+
 ## Updated construction queue — November 13, 2026
 Resume genesis/build-local-tests-20261113, test commit bb99992 (based on 867f16b). Do not repeat or undo the completed browser milestone.
 

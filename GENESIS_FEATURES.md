@@ -1,3 +1,26 @@
+## Current citizen communication status — November 13, 2026
+Code b20eca3, branch genesis/citizen-talk-20261113. Earlier construction verification remains valid.
+
+| Feature | Status | Acceptance evidence / limitation |
+| --- | --- | --- |
+| Profile TALK TO CITIZEN | VERIFIED | Actual Sage profile button opens dialog in localhost Chromium; all profiles share component. |
+| Selected citizen / Street View Talk button | IMPLEMENTED | Connected callback; live nearby-avatar workflow still pending. |
+| Persistent two-way Messages | VERIFIED | Actual UI typed messages/replies stored in real Convex and survive refresh. |
+| Personal context and prior-message recall | VERIFIED | Actual Sage activity and previous typed question verified; deterministic trait tests. |
+| Feeling communication anonymity | VERIFIED | Real saved message identity is unexplained, with Observer awareness unchanged. |
+| Invisible / proximity / deliberate identity rules | VERIFIED | Controlled engine/handler tests; real face-to-face approach still pending. |
+| Actor-only memories and claim distinction | VERIFIED | Sage gets own bounded received-message memories; other citizens unchanged. |
+| Retry deduplication and rate limits | VERIFIED | Handler tests include changed payload rejection and cooldown. |
+| Research suggestion goal decision | IMPLEMENTED | Bounded trait/needs rule can update goal; no autonomous investigation dispatch yet. |
+| Phone-size dialog | VERIFIED | Chromium 390×844 reachable touch-sized Send; physical Safari not tested. |
+| Real authorized language-model replies | BLOCKED | No verified free endpoint connected; paid model use not approved/enabled. Rules fallback clearly labelled. |
+| Strong real multi-user chat authorization | BLOCKED | Existing owner/backend auth unfinished; private deployment required. Simulated participant filtering is not production access control. |
+| Open-ended dialogue and queued/asleep delivery | NOT STARTED | Do not advertise the limited responder as unrestricted AI. |
+
+All 18 regression scripts and build pass. Full communication vision remains partially implemented; this is one complete verified persistent exchange milestone.
+
+---
+
 ## Current browser acceptance status — November 13, 2026
 Branch genesis/build-local-tests-20261113; verified test commit bb99992, app baseline 867f16b. This table supersedes earlier localhost browser-blocked entries.
 
