@@ -1,0 +1,26 @@
+{
+  "steps": [
+    "Actual Build Mode opens on localhost with the saved furniture; playback is stopped.",
+    "Pointer drag creates an actual wall.",
+    "Wall drawing supports undo and redo.",
+    "Selected wall can be deleted.",
+    "Rectangle drag creates four walls and a 12 m² enclosed floor.",
+    "Valid doorway and wall/floor colours update through the UI.",
+    "Furniture can be placed inside the room.",
+    "Normal Save writes the real Convex development backend and preserves existing furniture/history.",
+    "Page refresh reconstructs the same saved building and furniture.",
+    "A prior saved design can be loaded as a draft; Undo restores the current building without another save.",
+    "Phone-size layout exposes touch-sized construction controls (not a physical-device test).",
+    "Village simulation state stays unchanged; no uncaught browser errors."
+  ],
+  "manualBrowserVerification": false,
+  "physicalDeviceTest": false,
+  "baselineRevision": 5,
+  "baselineItems": 5,
+  "browserVersion": "159.0.8154.6",
+  "playback": "Stopped in UI; no Play/Advance command executed",
+  "savedRevision": 6,
+  "renderer": "CANVAS",
+  "responsiveViewport": "390x844",
+  "result": "PASS"
+}

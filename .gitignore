@@ -9,3 +9,6 @@ dist/
 public/genesis-products/life-organizer/
 
 products/The_Ultimate_Life_Organizer_Package.zip
+
+# Local browser evidence and private test backups
+.genesis-test-artifacts/

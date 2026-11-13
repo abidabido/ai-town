@@ -1,0 +1,16 @@
+{
+  "steps": [
+    "Existing building and furniture reconstruct in actual localhost Build Mode.",
+    "Second full page load restores the same wall and furniture counts.",
+    "Saved room, doorway and wall/floor finishes restore correctly.",
+    "390×844 layout keeps construction controls reachable and touch-sized.",
+    "Read-only retest changes neither the saved lot nor village state; no browser errors."
+  ],
+  "manualBrowserVerification": false,
+  "physicalDeviceTest": false,
+  "mode": "read-only reload",
+  "browserVersion": "159.0.8154.6",
+  "renderer": "CANVAS",
+  "savedRevision": 6,
+  "result": "PASS"
+}
