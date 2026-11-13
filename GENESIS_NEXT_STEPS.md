@@ -1,3 +1,20 @@
+## Next construction work — November 13, 2026
+Resume branch genesis/build-rooms-20261113, code c60cfc7. Read current checkpoints before older tasks below.
+
+1. BLOCKED — Browser acceptance of the new construction controls. Files: BuildBuy.tsx, BuildArchitecture.tsx, BuildScene.tsx, data/genesisArchitecture.ts. Dependency: normal authorized private preview access; current cloud browser denied the forwarded-port sign-in redirect. Do not circumvent the block. Expected: retain the five existing items, draw four walls or a rectangle in free space, see one room/floor, add a valid central doorway, change wall/floor colour, move/delete/undo/redo, save and refresh. Acceptance: live saved geometry and all existing items survive refresh; screenshot actual application; test responsive controls. Never label this passed from compile/unit tests alone.
+
+2. NOT STARTED — Furnishing/cutaway improvement. Files: BuildArchitecture.tsx, BuildArchitectureObjects.ts, BuildScene.tsx, BuildObjects.ts, genesisBuild.ts. Dependency: browser acceptance above. Add display-only walls-up/partial/down, polish a small catalog and keep geometry/save data intact. Acceptance: display toggles do not mutate walls; furniture rejects wall/door overlaps; saved colours reload; actual UI test.
+
+3. NOT STARTED — Doors/windows and room editing. Files: genesisArchitecture.ts, BuildArchitectureObjects.ts and controls. Support validated openings, connected-wall movement/resizing and shared-wall topology incrementally. Current axis-aligned endpoint-only rules deliberately reject crossings/T-junctions. Acceptance: no duplicate/invalid geometry; edits update room detection and preserve furniture or clearly warn; undo/redo and save/reload remain correct.
+
+4. NOT STARTED — Save and explore one house. Files: existing Street View/collision renderer plus new architecture geometry. Dependency: validated built geometry, doorway topology and route checks. Load the saved lot into supported world placement without replacing existing village buildings or residents. Acceptance: correct eye height, no wall/furniture penetration, actual doorway passage and return outside; no unsupported enter buttons.
+
+5. NOT STARTED — Household and citizen use. Dependency: real routing/collision invalidation and furniture action IDs. Preserve family links; assign household only after routes exist. Acceptance: citizens reach assigned beds/chairs and produce recorded actions; existing routines remain valid.
+
+Regression baseline: all 17 scripts/verify-genesis*.cjs; npm run build; git diff --check. Preserve untracked convex/README.md and existing product build artifacts. No new dependencies, paid assets, public exposure, background AI worker or destructive migration was added.
+
+---
+
 ## Build & Decorate — next tasks, November 13, 2026
 
 Resume branch genesis/build-buy-20261113, verified code cb93630. Read the newest progress section first. Preserve the medical milestone and all existing civilization data. Do not restart the app.

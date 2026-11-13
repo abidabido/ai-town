@@ -1,3 +1,6 @@
+
+## Original construction geometry — November 13, 2026
+BuildArchitectureObjects.ts constructs walls, lintels, doorway frames and room floors from original procedural Three.js box geometry. No downloaded game meshes, textures, animations or paid assets were used. Colours are editable materials. The open doorway has no operating door leaf.
 # Genesis visual assets
 
 The Visual Revolution milestone uses original procedural geometry in src/components/GenesisEnvironment.ts and GenesisWorld3D.tsx: gabled buildings, door/window trim, porches, raised gardens, trees, benches, roads, bridge decks and human figures. No third-party models, textures, animations, paid assets or generated photographs were downloaded.

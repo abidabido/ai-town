@@ -1,3 +1,24 @@
+## Build & Decorate — walls and rooms checkpoint — November 13, 2026
+Branch: genesis/build-rooms-20261113. Latest verified code commit: c60cfc7. This checkpoint supersedes older construction status below.
+
+Implemented: additive v2 structured lot data; touch/pointer wall drawing on a half-metre grid; rectangular room tool with translucent validity preview; enclosed-room detection and merged floor geometry; selection by wall dropdown or scene; wall movement in 0.5 m steps, deletion, height and colour; fixed central 1 m wide by 2.1 m high open doorways; saved floor colour. Existing undo/redo and versioned saves include architecture. Existing v1 records and furniture are preserved; opening a draft upgrades it in memory without overwriting the database.
+
+Verified by automated tests: 17 scripts/verify-genesis*.cjs PASS; npm run build PASS; git diff --check PASS. New rooms suite tests v1 compatibility, dimensions, overlaps/crossings, furniture and doorway clearance, closed-room floor area, removal opening a room, actual Three.js raycasts through the doorway and against lintel/solid wall, undo/redo and serialized geometry reload. Build backend fixture now saves and reloads v2 walls and doorway while preserving world/citizen data. These are controlled automated tests, not a claim of live browser refresh verification.
+
+Convex development sync PASS (convex dev --once). Frontend restarted on 0.0.0.0:5173 and local HTTP /ai-town returns 200. No public deployment or paid services. Existing bundle-size warning remains.
+
+Browser verification BLOCKED this session: cloud browser denied observation of the forwarded preview sign-in redirect under its URL/security policy. Do not retry via alternate browser mechanisms. The Codespace editor remains available. New drawing gestures, visual layout, live database save/refresh and mobile behaviour therefore remain IMPLEMENTED, not browser-VERIFIED. No physical iPad, mobile Safari, GPU/WebGL or multi-touch test was performed. Prior cloud renderer used SVGRenderer for actual 3D meshes; GPU output remains unverified.
+
+Existing saved lot was not rewritten or cleared; its five furniture objects and previous saved revisions remain. No village state, household, money, social, medical or Observer records were changed. The lot stays isolated and unoccupied, so existing citizen navigation is unaffected.
+
+Limits: single floor; maximum 64 axis-aligned walls with half-metre endpoints, 2.4–3.6 m heights and endpoint joins. Crossings, T-junctions and overlapping segments are rejected. Shared walls, arbitrary-angle walls, room resizing/moving, per-room finishes, roofs, windows, operating doors, wall rotation, demolition of village structures, walkable interiors, household assignments and citizen furniture use remain unfinished. Doorway-present labels do not prove full route accessibility. Furniture remains decorative. Never claim this is a completed enterable house.
+
+Run: npm run dev:frontend -- --host 0.0.0.0; private port 5173, /ai-town#genesis-build, then BUILD & DECORATE. Existing known preview address is https://redesigned-dollop-vgq5599rxw6hjpr-5173.app.github.dev/ai-town#genesis-build (not browser-verified this session). No new environment variables or destructive database migrations.
+
+Next: browser acceptance check of wall/room drawing, doorway addition, furniture preservation, undo/redo and actual save/reload once normal preview access is available. Then add a small room-furnishing/cutaway milestone before Street View/citizen navigation integration.
+
+---
+
 ## Build & Decorate checkpoint — November 13, 2026
 
 Branch: genesis/build-buy-20261113. Latest verified code commit: cb93630. Based on the medical checkpoint 5268bf0; preserves the entire existing village, Atlas lab and earlier touch/social/graphics systems.

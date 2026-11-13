@@ -1,3 +1,27 @@
+## Current construction status — November 13, 2026
+Code: c60cfc7 on genesis/build-rooms-20261113. This table supersedes older construction entries.
+
+| Feature | Status | Evidence / remaining acceptance test |
+| --- | --- | --- |
+| Existing furniture editor | VERIFIED | Existing automated build suite remains passing; prior browser tests recorded below. |
+| v1 save compatibility | VERIFIED | Old design canonicalization and furniture preservation tests; no destructive migration. |
+| Wall/room geometry and validation | VERIFIED | verify-genesis-rooms.cjs: room area, bounds, overlaps, furniture clearance, real meshes and doorway raycasts. |
+| Wall and rectangle touch drawing | IMPLEMENTED | Pointer handlers and previews compile. Browser gesture verification is BLOCKED by preview redirect policy. |
+| Wall selection, movement, deletion, paint and height | IMPLEMENTED | Shared validated draft/undo actions; live interaction test pending. |
+| Open doorway geometry | VERIFIED | Ray passes through opening, hits wall and lintel; fixed central opening, no operating door leaf. |
+| Floor colour and room warnings | IMPLEMENTED | Per-lot floor finish and enclosed-room/doorway labels; visual acceptance pending. |
+| Architecture undo/redo | VERIFIED | Atomic room operation and undo/redo tests. |
+| v2 backend save round trip | VERIFIED | Controlled backend-handler fixture stores/reloads architecture and leaves world data unchanged. |
+| Live architecture save and refresh | BLOCKED | Preview browser access denied this session; actual database/UI refresh acceptance still needed. |
+| Private development sync / local frontend | VERIFIED | Convex dev --once successful; npm run build successful; local HTTP 200. |
+| Mobile drawing and visual quality | IMPLEMENTED | Responsive controls and pointer input; physical device, multi-touch and new browser interactions not tested. |
+| Windows, roofs, multi-storey, full material catalog | NOT STARTED | Later construction milestones. |
+| Walkable built interiors and citizen furniture use | NOT STARTED | Require collision/pathfinding and real action integration before acceptance. |
+
+All 17 regression scripts passed. Full Build & Buy expansion is not complete. No new live-data save, public deployment, paid services or database reset occurred.
+
+---
+
 ## Build & Buy status — November 13, 2026
 
 Verified code cb93630 on genesis/build-buy-20261113. This is the isolated lot foundation, not the entire requested house-building system.
