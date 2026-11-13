@@ -1,3 +1,5 @@
+import { buildWall, buildFloors } from "./BuildArchitectureObjects";
+import { rectangleWalls, type Wall } from "../../data/genesisArchitecture";
 import { useEffect, useRef } from "react";
 import * as T from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -19,6 +21,7 @@ type Props = {
   onSelect: (id: string) => void;
   onCommit: (item: BuildItem) => void;
   onStatus: (s: string) => void;
+  onDesign: (d: LotDesign) => void;
 };
 export default function BuildScene(props: Props) {
   const host = useRef<HTMLDivElement>(null),
@@ -78,6 +81,9 @@ export default function BuildScene(props: Props) {
     let ghost: T.Group | undefined;
     let outline: T.Box3Helper | undefined;
     let draft: BuildItem | undefined;
+    let architectural: Wall[] | undefined;
+    let start: { x: number; z: number } | undefined;
+    let error = "Draw inside the lot, clear of furniture and other walls.";
     let valid = false;
     let gesture = false;
     let pinch = 0;
@@ -89,11 +95,21 @@ export default function BuildScene(props: Props) {
         ghost = undefined;
       }
       draft = undefined;
+      architectural = undefined;
+      start = undefined;
     };
     const draw = () => {
       for (const g of [...objects.children]) {
         objects.remove(g);
         disposeBuildObject(g);
+      }
+      const floor = buildFloors(latest.current.design);
+      floor.traverse((o) => (o.renderOrder = 2));
+      objects.add(floor);
+      for (const w of latest.current.design.walls ?? []) {
+        const model = buildWall(w);
+        model.traverse((o) => (o.renderOrder = 3));
+        objects.add(model);
       }
       for (const i of latest.current.design.items) {
         const model = buildObject(i);
@@ -181,6 +197,65 @@ export default function BuildScene(props: Props) {
         if (mat?.color) mat.color.set(valid ? "#6bba9d" : "#df7767");
       });
     };
+    const architecturePreview = (e: PointerEvent) => {
+      const p = point(e);
+      if (!p || !start) return;
+      const x = Math.round(p.x * 2) / 2,
+        z = Math.round(p.z * 2) / 2;
+      const prefix = "wall-" + e.pointerId + "-" + Date.now();
+      try {
+        architectural =
+          latest.current.tool === "room"
+            ? rectangleWalls(start.x, start.z, x, z, 2.8, "#e7dcc8", prefix)
+            : [
+                {
+                  id: prefix,
+                  x1: start.x,
+                  z1: start.z,
+                  x2:
+                    Math.abs(x - start.x) >= Math.abs(z - start.z)
+                      ? x
+                      : start.x,
+                  z2:
+                    Math.abs(x - start.x) >= Math.abs(z - start.z)
+                      ? start.z
+                      : z,
+                  height: 2.8,
+                  color: "#e7dcc8",
+                },
+              ];
+        validateLot({
+          ...latest.current.design,
+          walls: [...(latest.current.design.walls ?? []), ...architectural],
+        });
+        valid = true;
+      } catch (e) {
+        valid = false;
+        error =
+          e instanceof Error ? e.message : "Try drawing in a clear space.";
+      }
+      if (ghost) {
+        scene.remove(ghost);
+        disposeBuildObject(ghost);
+      }
+      ghost = new T.Group();
+      for (const w of architectural ?? []) {
+        if (!Math.hypot(w.x2 - w.x1, w.z2 - w.z1)) continue;
+        const model = buildWall(w);
+        model.traverse((o) => {
+          const m = o as T.Mesh;
+          const mat = m.material as T.MeshLambertMaterial;
+          if (mat) {
+            mat.color.set(valid ? "#6bba9d" : "#df7767");
+            mat.transparent = true;
+            mat.opacity = 0.55;
+          }
+          o.renderOrder = 4;
+        });
+        ghost.add(model);
+      }
+      scene.add(ghost);
+    };
     const down = (e: PointerEvent) => {
       if (e.button !== 0) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -194,6 +269,14 @@ export default function BuildScene(props: Props) {
       gesture = false;
       if (latest.current.tool === "view") return;
       e.preventDefault();
+      if (latest.current.tool === "wall" || latest.current.tool === "room") {
+        const p = point(e);
+        if (p)
+          start = { x: Math.round(p.x * 2) / 2, z: Math.round(p.z * 2) / 2 };
+        valid = false;
+        architecturePreview(e);
+        return;
+      }
       const id = hit(e);
       if (latest.current.tool === "select") {
         latest.current.onSelect(id ?? "");
@@ -235,10 +318,19 @@ export default function BuildScene(props: Props) {
         }
         return;
       }
-      if (!gesture && draft) preview(e);
+      if (!gesture && start) architecturePreview(e);
+      else if (!gesture && draft) preview(e);
     };
     const up = (e: PointerEvent) => {
       pointers.delete(e.pointerId);
+      if (!gesture && start) {
+        if (valid && architectural)
+          latest.current.onDesign({
+            ...latest.current.design,
+            walls: [...(latest.current.design.walls ?? []), ...architectural],
+          });
+        else latest.current.onStatus(error);
+      }
       if (!gesture && draft) {
         if (valid) latest.current.onCommit(draft);
         else

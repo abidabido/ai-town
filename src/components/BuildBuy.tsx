@@ -1,3 +1,5 @@
+import BuildArchitecture from "./BuildArchitecture";
+import { upgradeLot } from "../../data/genesisBuild";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -72,7 +74,7 @@ export default function BuildBuy({
     setSelected(i.id);
   };
   const enter = () => {
-    const design = structuredClone(row?.design ?? emptyLot()) as LotDesign;
+    const design = upgradeLot(row?.design ?? emptyLot());
     setH({ present: design, past: [], future: [] });
     setBase(row?.revision ?? 0);
     setSaved(JSON.stringify(design));
@@ -312,13 +314,16 @@ export default function BuildBuy({
                   onSelect={setSelected}
                   onCommit={commit}
                   onStatus={setStatus}
+                  onDesign={change}
                 />
                 <div className="build-hint">
-                  {tool === "view"
-                    ? "Drag to orbit. Two fingers pan and pinch to zoom."
-                    : tool === "place"
-                      ? "Drag your new object onto the grid. Lift to place it."
-                      : "Tap an object to select it. Choose Move, then drag it to a new spot."}{" "}
+                  {tool === "wall" || tool === "room"
+                    ? "Drag on the lot to draw. Lift to place; pinch cancels the drawing."
+                    : tool === "view"
+                      ? "Drag to orbit. Two fingers pan and pinch to zoom."
+                      : tool === "place"
+                        ? "Drag your new object onto the grid. Lift to place it."
+                        : "Tap an object to select it. Choose Move, then drag it to a new spot."}{" "}
                   Two fingers zoom while editing. Walking is unavailable inside
                   this editor.
                 </div>
@@ -327,6 +332,14 @@ export default function BuildBuy({
                 </p>
               </main>
               <aside aria-label="Object details">
+                <BuildArchitecture
+                  design={h.present}
+                  selected={selected}
+                  onSelect={setSelected}
+                  tool={tool}
+                  setTool={setTool}
+                  change={change}
+                />
                 <h3>Your design</h3>
                 <label>
                   Lot name
@@ -433,13 +446,15 @@ export default function BuildBuy({
                   <summary>What works in this first version?</summary>
                   <p>
                     Place, move, rotate, paint, duplicate, delete, undo, redo,
-                    and save original 3D objects. This is a furnishing and
-                    placement foundation, not a finished house builder.
+                    and save original 3D objects. Draw walls and rectangular
+                    rooms with open doorways. This is a single-floor design
+                    editor; village navigation is not connected yet.
                   </p>
                   <p>
-                    Wall drawing, rooms, doors, household assignment and
-                    walkable interiors are next. Furniture is decorative until
-                    its citizen actions are connected.
+                    Household assignment, opening doors and walkable interiors
+                    are next. Walls, enclosed floors and open doorways can now
+                    be designed here. Furniture is decorative until its citizen
+                    actions are connected.
                   </p>
                 </details>
                 {!!row?.history.length && (
@@ -448,7 +463,7 @@ export default function BuildBuy({
                     {row.history.map((v) => (
                       <button
                         key={v.revision}
-                        onClick={() => change(structuredClone(v.design))}
+                        onClick={() => change(upgradeLot(v.design))}
                       >
                         Load version {v.revision} as a draft
                       </button>

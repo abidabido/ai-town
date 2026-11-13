@@ -342,3 +342,32 @@
   border-radius: 50%;
   border: 1px solid #526a59;
 }
+
+#genesis-build .build-architecture {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #d8d4c8;
+}
+#genesis-build .build-architecture h3 {
+  font-size: 1.1rem;
+  margin: 0 0 10px;
+}
+#genesis-build .build-architecture label {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+#genesis-build .build-architecture input[type="color"] {
+  width: 100%;
+  min-height: 44px;
+}
+#genesis-build .build-architecture select {
+  width: 100%;
+  min-height: 44px;
+  color: #263c35;
+  background: #fffaf1;
+}
+#genesis-build .build-architecture p {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}

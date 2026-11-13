@@ -1,3 +1,4 @@
+import { validateWalls, type Wall } from "./genesisArchitecture";
 export const LOT_SIZE = 12;
 export const BUILD_CATALOG = [
   {
@@ -73,7 +74,13 @@ export type BuildItem = {
   rotation: number;
   color: string;
 };
-export type LotDesign = { schemaVersion: 1; name: string; items: BuildItem[] };
+export type LotDesign = {
+  schemaVersion: 1 | 2;
+  name: string;
+  items: BuildItem[];
+  walls?: Wall[];
+  floorColor?: string;
+};
 export type BuildHistory = {
   present: LotDesign;
   past: LotDesign[];
@@ -95,7 +102,7 @@ export function validateLot(input: unknown): LotDesign {
   const a = input as LotDesign;
   if (
     !a ||
-    a.schemaVersion !== 1 ||
+    ![1, 2].includes(a.schemaVersion) ||
     typeof a.name !== "string" ||
     !a.name.trim() ||
     a.name.length > 60 ||
@@ -148,7 +155,21 @@ export function validateLot(input: unknown): LotDesign {
           "Those objects overlap. Leave a little space between them.",
         );
     }
-  return { schemaVersion: 1, name: a.name.trim(), items };
+  if (a.schemaVersion === 1)
+    return { schemaVersion: 1, name: a.name.trim(), items };
+  const walls = validateWalls(
+    a.walls,
+    items.map((i) => ({ ...footprint(i), x: i.x, z: i.z })),
+  );
+  if (typeof a.floorColor !== "string" || !/^#[0-9a-f]{6}$/i.test(a.floorColor))
+    throw Error("Choose a valid floor colour.");
+  return {
+    schemaVersion: 2,
+    name: a.name.trim(),
+    items,
+    walls,
+    floorColor: a.floorColor,
+  };
 }
 export function changeBuild(h: BuildHistory, next: LotDesign): BuildHistory {
   const valid = validateLot(next);
@@ -176,4 +197,14 @@ export function redoBuild(h: BuildHistory): BuildHistory {
         future: h.future.slice(1),
       }
     : h;
+}
+
+export function upgradeLot(input: unknown): LotDesign {
+  const a = validateLot(input);
+  return {
+    ...a,
+    schemaVersion: 2,
+    walls: a.walls ?? [],
+    floorColor: a.floorColor ?? "#bb946d",
+  };
 }

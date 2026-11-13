@@ -184,6 +184,64 @@ const compile = (p, modules) => {
         true,
       );
     assert.equal(row.history.length, 5);
+    const architecture = {
+      ...m.upgradeLot(design),
+      walls: [
+        {
+          id: "north",
+          x1: -5,
+          z1: -5,
+          x2: -2,
+          z2: -5,
+          height: 2.8,
+          color: "#e7dcc8",
+          door: true,
+        },
+        {
+          id: "east",
+          x1: -2,
+          z1: -5,
+          x2: -2,
+          z2: -2,
+          height: 2.8,
+          color: "#e7dcc8",
+        },
+        {
+          id: "south",
+          x1: -5,
+          z1: -2,
+          x2: -2,
+          z2: -2,
+          height: 2.8,
+          color: "#e7dcc8",
+        },
+        {
+          id: "west",
+          x1: -5,
+          z1: -5,
+          x2: -5,
+          z2: -2,
+          height: 2.8,
+          color: "#e7dcc8",
+        },
+      ],
+    };
+    assert.equal(
+      (
+        await backend.save.handler(ctx, {
+          worldId: "world",
+          expectedRevision: row.revision,
+          design: architecture,
+        })
+      ).ok,
+      true,
+    );
+    row = JSON.parse(JSON.stringify(row));
+    assert.deepEqual(
+      (await backend.current.handler(ctx, { worldId: "world" })).design,
+      m.validateLot(architecture),
+    );
+    assert.equal(row.history.length, 5);
     assert.equal(JSON.stringify(world), worldBefore);
     assert.equal(
       (
