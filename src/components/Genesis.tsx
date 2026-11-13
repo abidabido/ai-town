@@ -1,3 +1,4 @@
+import BuildBuy from "./BuildBuy";
 import MedicalResearchLab from "./MedicalResearchLab";
 import "./MedicalResearchLab.css";
 import ConnectedSociety from "./ConnectedSociety";
@@ -475,6 +476,7 @@ export default function Genesis() {
             <nav className="genesis-nav" aria-label="Village navigation">
               {[
                 ["My Village", "genesis-village"],
+                ["Build & Decorate", "genesis-build"],
                 ["The People", "genesis-people"],
                 ["Love & Families", "genesis-families"],
                 ["Town Talk", "genesis-talk"],
@@ -753,6 +755,7 @@ export default function Genesis() {
                 increase observations.
               </span>
             </div>
+            <BuildBuy worldId={current!.id} />
             <div className="layout">
               <div>
                 <GenesisWorld

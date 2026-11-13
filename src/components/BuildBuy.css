@@ -1,0 +1,344 @@
+#genesis-build .build-launch > button {
+  min-height: 48px;
+  padding: 12px 24px;
+}
+#genesis-build .build-launch small {
+  display: block;
+  margin-top: 12px;
+}
+#genesis-build .build-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #edf0e8;
+  color: #243b36;
+  font: 16px/1.45 system-ui;
+  overscroll-behavior: contain;
+}
+#genesis-build .build-dialog::backdrop {
+  background: #102a25d9;
+}
+#genesis-build .build-editor {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+#genesis-build .build-editor > header {
+  background: #24483f;
+  color: #fff5e8;
+  padding: 14px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+#genesis-build .build-editor h2 {
+  font: 600 1.5rem Georgia;
+  margin: 4px 0;
+}
+#genesis-build .build-editor header span {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+}
+#genesis-build .build-editor header > div:last-child {
+  display: flex;
+  gap: 10px;
+}
+#genesis-build .build-editor button,
+#genesis-build .build-editor input,
+#genesis-build .build-editor select {
+  font: inherit;
+}
+#genesis-build .build-editor button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #9daf9e;
+  border-radius: 12px;
+  background: #fffaf0;
+  color: #29473c;
+  cursor: pointer;
+}
+#genesis-build .build-editor button[aria-pressed="true"] {
+  background: #d4b677;
+  color: #283c32;
+  outline: 2px solid #665737;
+}
+#genesis-build .build-editor button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#genesis-build .build-workspace {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr) 220px;
+  min-height: 0;
+  flex: 1;
+}
+#genesis-build .build-workspace > aside {
+  padding: 16px;
+  overflow: auto;
+  background: #f7f5ed;
+}
+#genesis-build .build-workspace > aside:first-child {
+  border-right: 1px solid #c7d1c0;
+}
+#genesis-build .build-workspace > aside:last-child {
+  border-left: 1px solid #c7d1c0;
+}
+#genesis-build .build-workspace label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+#genesis-build .build-workspace input:not([type="checkbox"]),
+#genesis-build .build-workspace select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 9px;
+  background: white;
+  color: #263f35;
+  border: 1px solid #acbda8;
+  border-radius: 9px;
+  margin-top: 5px;
+}
+#genesis-build .build-check {
+  display: flex !important;
+  gap: 8px;
+  align-items: center;
+}
+#genesis-build .build-check input {
+  min-width: 22px;
+  min-height: 22px;
+}
+#genesis-build .build-catalog {
+  display: grid;
+  gap: 10px;
+}
+#genesis-build .build-catalog button {
+  text-align: left;
+  padding: 12px;
+  display: grid;
+  gap: 3px;
+}
+#genesis-build .build-catalog small {
+  font-size: 0.75rem;
+}
+#genesis-build .catalog-icon {
+  display: grid;
+  place-items: center;
+  height: 45px;
+  background: #e3e9da;
+  border-radius: 8px;
+  color: #836347;
+  font-size: 2rem;
+}
+#genesis-build .icon-planter {
+  color: #598166;
+}
+#genesis-build .build-note {
+  font-size: 0.78rem;
+  color: #516b60;
+}
+#genesis-build .build-workspace > main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+#genesis-build .build-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  background: #e5e9dc;
+}
+#genesis-build .build-toolbar button {
+  font-size: 0.85rem;
+}
+#genesis-build .build-scene {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+#genesis-build .build-scene > canvas,
+#genesis-build .build-scene > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+#genesis-build .build-hint {
+  padding: 10px 16px;
+  background: #dae5d5;
+  font-size: 0.8rem;
+}
+#genesis-build .build-editor [role="status"] {
+  margin: 0;
+  padding: 8px 16px;
+  min-height: 28px;
+  font-size: 0.85rem;
+}
+#genesis-build .build-editor details {
+  font-size: 0.82rem;
+  margin: 16px 0;
+}
+#genesis-build .build-editor summary {
+  cursor: pointer;
+  min-height: 44px;
+}
+#genesis-build .build-editor details button {
+  display: block;
+  margin: 8px 0;
+}
+#genesis-build .build-nudge {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+#genesis-build .build-nudge button {
+  font-size: 0.75rem;
+}
+#genesis-build .build-warning {
+  position: absolute;
+  inset: 25% 12% auto;
+  padding: 28px;
+  background: #fff9e9;
+  border: 2px solid #96743c;
+  box-shadow: 0 20px 100px #18372f88;
+  border-radius: 20px;
+  z-index: 5;
+}
+#genesis-build .build-warning button {
+  margin: 5px;
+}
+#genesis-build .build-editor input:focus-visible,
+#genesis-build .build-editor button:focus-visible,
+#genesis-build .build-editor select:focus-visible {
+  outline: 3px solid #b98535;
+  outline-offset: 2px;
+}
+@media (max-width: 1000px) {
+  #genesis-build .build-workspace {
+    grid-template-columns: 155px minmax(0, 1fr) 175px;
+  }
+  #genesis-build .build-workspace > aside {
+    padding: 10px;
+  }
+  #genesis-build .build-toolbar button {
+    padding: 8px;
+    font-size: 0.75rem;
+  }
+}
+@media (max-width: 700px) {
+  #genesis-build .build-dialog {
+    overflow: auto;
+  }
+  #genesis-build .build-editor {
+    min-height: 100%;
+    height: auto;
+  }
+  #genesis-build .build-editor > header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 10px;
+    flex-wrap: wrap;
+  }
+  #genesis-build .build-editor h2 {
+    font-size: 1.2rem;
+  }
+  #genesis-build .build-workspace {
+    display: flex;
+    flex-direction: column;
+  }
+  #genesis-build .build-workspace > aside:first-child {
+    order: 0;
+  }
+  #genesis-build .build-workspace > main {
+    order: 1;
+  }
+  #genesis-build .build-workspace > aside:last-child {
+    order: 2;
+  }
+  #genesis-build .build-catalog {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  #genesis-build .build-catalog button {
+    min-width: 135px;
+  }
+  #genesis-build .build-workspace > aside:first-child > label {
+    display: inline-block;
+    width: 48%;
+    margin-right: 2%;
+  }
+  #genesis-build .build-note {
+    margin: 0;
+  }
+  #genesis-build .build-scene {
+    height: 45dvh;
+    min-height: 320px;
+    flex: none;
+  }
+  #genesis-build .build-toolbar {
+    position: sticky;
+    top: 0;
+  }
+  #genesis-build .build-workspace > aside:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  #genesis-build .build-workspace > aside:last-child details {
+    grid-column: 1/-1;
+  }
+  #genesis-build .build-warning {
+    position: fixed;
+    inset: 20% 5% auto;
+  }
+}
+
+#genesis-build .build-editor summary {
+  color: #315449;
+}
+#genesis-build .build-check input {
+  accent-color: #315f4e;
+}
+#genesis-build .build-editor input[type="color"] {
+  height: 48px;
+  padding: 4px;
+}
+
+#genesis-build .build-swatches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 12px 0;
+}
+#genesis-build .build-swatches button {
+  font-size: 0.75rem;
+  padding: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+#genesis-build .build-swatches span {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #526a59;
+}

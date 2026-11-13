@@ -6,6 +6,14 @@ import { conversationId, playerId } from "./aiTown/ids";
 import { engineTables } from "./engine/schema";
 
 export default defineSchema({
+  genesisBuildLots: defineTable({
+    worldId: v.id("genesisSessions"),
+    key: v.string(),
+    design: v.any(),
+    revision: v.number(),
+    updatedAt: v.number(),
+    history: v.array(v.object({ revision: v.number(), design: v.any() })),
+  }).index("world", ["worldId"]),
   genesisMedicalReviews: defineTable({
     worldId: v.id("genesisSessions"),
     protocol: v.string(),
