@@ -76,6 +76,16 @@ export type LifeState = {
   lightUntil: number;
   // Additive household food inventory (servings). Keyed by household id. Optional for migration safety.
   foodInventory?: Record<string, number>;
+  // Additive single grocery store for the food-economy milestone. Migration-safe.
+  grocery?: {
+    id: string;
+    name: string;
+    location: string;
+    inventory: Record<string, number>;
+    prices: Record<string, number>;
+    records: { tick: number; kind: string; detail: string; amount?: number }[];
+    open: boolean;
+  };
 };
 export type LivingState = GenesisState & { life: LifeState };
 export type LifeEvent = GenesisEvent & {
@@ -133,6 +143,40 @@ export function consumeHouseholdFood(s: LivingState, household: string, amount: 
   return true;
 }
 
+// Grocery store operations (additive, uses existing ledger + supplies)
+export function restockGrocery(s: LivingState, servings: number, tick: number): boolean {
+  if (!s.life.grocery || servings <= 0 || (s.supplies ?? 0) < servings) return false;
+  s.supplies -= servings;
+  s.life.grocery.inventory["basic-servings"] = (s.life.grocery.inventory["basic-servings"] ?? 0) + servings;
+  s.life.grocery.records.push({ tick, kind: "restock", detail: "Cooperative supplied " + servings + " basic servings", amount: servings });
+  return true;
+}
+
+export function shopForHousehold(
+  s: LivingState,
+  out: { events: any[]; transactions?: any[] },
+  citizenId: number,
+  servings: number,
+  tick: number,
+): { ok: boolean; reason: string } {
+  const g = s.life.grocery;
+  if (!g || !g.open) return { ok: false, reason: "store closed or missing" };
+  const household = householdKey(citizenId, s);
+  const price = g.prices["basic-servings"] ?? 200;
+  const cost = price * servings;
+  const account = "citizen:" + citizenId;
+  const stock = g.inventory["basic-servings"] ?? 0;
+  if (stock < servings) return { ok: false, reason: "insufficient store stock" };
+  if ((s.life.accounts[account] ?? 0) < cost) return { ok: false, reason: "unaffordable" };
+  // Real transfer through existing ledger
+  if (!transfer(s, out, account, "grocery:willow", cost, "Grocery purchase: " + servings + " servings", "shop-" + tick + "-" + citizenId))
+    return { ok: false, reason: "transfer failed" };
+  g.inventory["basic-servings"] = stock - servings;
+  addHouseholdFood(s, household, servings);
+  g.records.push({ tick, kind: "sale", detail: "Sold " + servings + " servings to household " + household, amount: servings });
+  return { ok: true, reason: "purchased " + servings + " servings for household " + household };
+}
+
 export function calendar(tick: number) {
   const day = Math.floor(tick / 4);
   return {
@@ -150,6 +194,19 @@ export function upgradeLiving(input: GenesisState): LivingState {
   const s = clone(input) as LivingState;
   if (s.life) {
     if (s.life.version !== 2) throw Error("Unsupported Genesis save version");
+    if (!s.life.foodInventory) s.life.foodInventory = {};
+    if (!s.life.grocery) {
+      s.life.grocery = {
+        id: "grocery-main",
+        name: "Willow Market",
+        location: "market",
+        inventory: { "basic-servings": 0 },
+        prices: { "basic-servings": 200 },
+        records: [],
+        open: true,
+      };
+    }
+    if (!s.life.accounts["grocery:willow"]) s.life.accounts["grocery:willow"] = 0;
     for (const c of s.citizens)
       s.life.people[c.id].profile = profileFor(c, s.life.people[c.id]);
     return s;
@@ -171,6 +228,7 @@ export function upgradeLiving(input: GenesisState): LivingState {
   const accounts: Record<string, number> = {
     cooperative: 100000,
     treasury: 100000,
+    "grocery:willow": 0,
   };
   const people: Record<string, LifePerson> = {};
   for (const c of s.citizens) {
@@ -228,6 +286,16 @@ export function upgradeLiving(input: GenesisState): LivingState {
     research: 0,
     researchProblem: "Compare food yields across weather conditions.",
     severeOutcomes: false,
+    foodInventory: {},
+    grocery: {
+      id: "grocery-main",
+      name: "Willow Market",
+      location: "market",
+      inventory: { "basic-servings": 0 },
+      prices: { "basic-servings": 200 },
+      records: [],
+      open: true,
+    },
     shortageUntil: 0,
     lightUntil: 0,
   };
@@ -342,6 +410,18 @@ export function advanceLiving(
     );
     if (p.hunger > 85) p.health = Math.max(25, p.health - 3);
     if (researchUsed.includes(c.id) || phoneUsed.includes(c.id)) continue;
+    // Autonomous household shopping when pantry is low (not only when already hungry)
+    const household = householdKey(c.id, s);
+    const pantry = getHouseholdFood(s, household);
+    if (pantry < 3 && s.life.grocery?.open && (s.life.grocery.inventory["basic-servings"] ?? 0) >= 3) {
+      const result = shopForHousehold(s, out, c.id, 3, s.tick);
+      if (result.ok) {
+        p.activity = "Shopping for the household";
+        move(s, c.id, "market");
+        event(out, "Shopping", [c.id], c.name + " bought groceries for the household: " + result.reason, "Household pantry below 3 servings");
+        continue;
+      }
+    }
     if (hour === 0 || p.fatigue >= 85) {
       p.fatigue = clamp(p.fatigue - 55);
       p.activity = "Sleeping";
