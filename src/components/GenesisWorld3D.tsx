@@ -399,7 +399,13 @@ export default function GenesisWorld3D(props: Props) {
     const addPerson = (c: Props["state"]["citizens"][number]) => {
       const p = latest.current.state.life.people[c.id];
       const g = new T.Group();
-      g.position.copy(world(c.x, c.y));
+      // If citizen has an accepted interior position and cottage is shown, place them indoors
+      const interior = (p as any)?.interiorPos;
+      if (interior && showCottageInterior) {
+        g.position.set(interior.x, 0.1, interior.z);
+      } else {
+        g.position.copy(world(c.x, c.y));
+      }
       g.userData.citizen = c.id;
       scene.add(g);
       const human = buildCitizen(tools, g, p, c.id);
