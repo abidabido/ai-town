@@ -177,7 +177,7 @@ export function restockGrocery(s: LivingState, servings: number, tick: number): 
 
 export function shopForHousehold(
   s: LivingState,
-  out: { events: any[]; transactions?: any[] },
+  out: LifeResult,
   citizenId: number,
   servings: number,
   tick: number,
