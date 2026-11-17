@@ -74,6 +74,8 @@ export type LifeState = {
   severeOutcomes: boolean;
   shortageUntil: number;
   lightUntil: number;
+  // Additive household food inventory (servings). Keyed by household id. Optional for migration safety.
+  foodInventory?: Record<string, number>;
 };
 export type LivingState = GenesisState & { life: LifeState };
 export type LifeEvent = GenesisEvent & {
@@ -112,6 +114,25 @@ export type LifeResult = {
 export const clamp = (v: number) => Math.max(0, Math.min(100, v));
 export const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 export const money = (v: number) => "¤" + (v / 100).toFixed(2);
+
+// Household food inventory helpers (additive, migration-safe)
+export function householdKey(personId: number, s: LivingState): string {
+  return s.life.people[personId]?.home || "home-0";
+}
+export function getHouseholdFood(s: LivingState, household: string): number {
+  return s.life.foodInventory?.[household] ?? 0;
+}
+export function addHouseholdFood(s: LivingState, household: string, amount: number): void {
+  if (!s.life.foodInventory) s.life.foodInventory = {};
+  s.life.foodInventory[household] = Math.max(0, (s.life.foodInventory[household] ?? 0) + amount);
+}
+export function consumeHouseholdFood(s: LivingState, household: string, amount: number): boolean {
+  const have = getHouseholdFood(s, household);
+  if (have < amount) return false;
+  addHouseholdFood(s, household, -amount);
+  return true;
+}
+
 export function calendar(tick: number) {
   const day = Math.floor(tick / 4);
   return {
@@ -342,6 +363,32 @@ export function advanceLiving(
         c.name + " sought a meal.",
         "Hunger " + p.hunger + "; morning meal schedule or hunger priority",
       );
+      const household = householdKey(c.id, s);
+      // Prefer cooking from household inventory (farm-to-table demo path)
+      if (consumeHouseholdFood(s, household, 1)) {
+        p.hunger = clamp(p.hunger - 48);
+        p.activity = "Cooking and eating at home";
+        move(s, c.id, "homes");
+        out.events[out.events.length - 1].text =
+          c.name + " cooked and ate a meal from the household pantry. Hunger satisfied.";
+        continue;
+      }
+      // Simple grocery: if household empty and supplies exist, buy into household then eat
+      if (s.supplies >= 1 && s.life.accounts[account] >= 200) {
+        if (transfer(s, out, account, "cooperative", 200, "Grocery purchase", id)) {
+          s.supplies--;
+          addHouseholdFood(s, household, 1);
+          // Immediately cook/eat the purchased serving
+          if (consumeHouseholdFood(s, household, 1)) {
+            p.hunger = clamp(p.hunger - 48);
+            p.activity = "Buying groceries and cooking";
+            move(s, c.id, "homes");
+            out.events[out.events.length - 1].text =
+              c.name + " bought groceries for ¤2.00, stocked the household pantry, and cooked a meal.";
+            continue;
+          }
+        }
+      }
       if (s.life.accounts[account] < 300 && s.life.accounts.treasury >= 300)
         transfer(s, out, "treasury", account, 300, "Food relief", id);
       if (
