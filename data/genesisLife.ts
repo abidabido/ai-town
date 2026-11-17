@@ -511,19 +511,65 @@ export function cookRecipe(
 
 
 
+
+// Simple cottage interior collision and doorway (additive, does not alter existing building geometry)
+export const COTTAGE_INTERIOR = {
+  bounds: { minX: -4, maxX: 4, minZ: -3, maxZ: 3 },
+  doorway: { x: 0, z: 3.1, width: 1.2 },
+  kitchen: { x: -2.2, z: -2.0 },
+  table: { x: 1.2, z: 0.5 },
+  obstacles: [
+    { x: -3.2, z: -2.2, r: 0.6 }, // fridge
+    { x: -1.6, z: -2.2, r: 0.5 }, // stove
+    { x: 1.2, z: 0.5, r: 0.9 },   // table
+  ],
+};
+
+export function isInsideCottage(x: number, z: number): boolean {
+  const b = COTTAGE_INTERIOR.bounds;
+  return x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
+}
+
+export function canStandInCottage(x: number, z: number): boolean {
+  if (!isInsideCottage(x, z)) return false;
+  for (const o of COTTAGE_INTERIOR.obstacles) {
+    if (Math.hypot(x - o.x, z - o.z) < o.r) return false;
+  }
+  return true;
+}
+
+export function canWalkInCottage(from: {x:number,z:number}, to: {x:number,z:number}): boolean {
+  if (!canStandInCottage(from.x, from.z) || !canStandInCottage(to.x, to.z)) return false;
+  const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.z - from.z) / 0.2));
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    if (!canStandInCottage(from.x + (to.x - from.x) * t, from.z + (to.z - from.z) * t)) return false;
+  }
+  return true;
+}
+
+export function doorwayClear(x: number, z: number): boolean {
+  const d = COTTAGE_INTERIOR.doorway;
+  return Math.abs(x - d.x) < d.width / 2 && Math.abs(z - d.z) < 0.4;
+}
 export function cookAtHome(
   s: LivingState,
   citizenId: number,
   recipeId: string,
-): { ok: boolean; reason: string; mealId?: string } {
+): { ok: boolean; reason: string; mealId?: string; position?: {x:number,z:number} } {
   const person = s.life.people[citizenId];
   if (!person) return { ok: false, reason: "no citizen" };
+  // Require a clear path from doorway to kitchen station
+  const start = { x: COTTAGE_INTERIOR.doorway.x, z: COTTAGE_INTERIOR.doorway.z - 0.5 };
+  const kitchen = COTTAGE_INTERIOR.kitchen;
+  if (!canWalkInCottage(start, kitchen))
+    return { ok: false, reason: "kitchen station unreachable" };
   person.location = "homes";
-  person.activity = "Preparing a meal in the kitchen";
+  person.activity = "Walking to kitchen";
   const result = cookRecipe(s, citizenId, recipeId);
   if (result.ok) {
     person.activity = "Eating at the dining table";
-    // Consume one portion if the meal exists
+    (person as any).interiorPos = COTTAGE_INTERIOR.table;
     const hh = householdKey(citizenId, s);
     const inv = s.life.foodInventory?.[hh] as any;
     if (inv && result.mealId && inv[result.mealId] > 0) {
@@ -531,7 +577,7 @@ export function cookAtHome(
       person.hunger = Math.max(0, (person.hunger ?? 50) - 40);
     }
   }
-  return result;
+  return { ...result, position: kitchen };
 }
 export function advanceLiving(
   previous: GenesisState,
