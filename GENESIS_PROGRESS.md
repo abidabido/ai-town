@@ -304,3 +304,22 @@ Environment: GENESIS_PDF_PYTHON optionally selects Python; default /workspaces/.
 Limit: first product-specific artifact validation/packaging pipeline, not a general-purpose autonomous product designer. 31 reusable daily pages require duplication for a full year; budgets are manual; PDF is not a type-in form. Proposed $9 and fee scenario are assumptions, not researched platform rates or verified profit.
 
 Latest verified product code commit: 77555bd. Browser now verifies artifact bytes against the recorded SHA before enabling downloads, and confirms preview and package availability. Both full PDF and complete package download controls were exercised. All five existing Genesis suites and product validation/negative tests passed; final production build and Convex dev update passed.
+
+## Food & Enchanted World — November 17, 2026
+Branch: genesis/food-ecosystem-20261117. Recipes checkpoint: 756d0c7.
+
+MILESTONE A (Real Food) — DONE and tested:
+- Ingredients catalog + five recipes
+- Cooking skill, known recipes, favorites (additive)
+- cookRecipe creates real portions, deducts ingredients, raises skill
+- verify-genesis-recipes.cjs PASS
+- life + grocery suites still PASS
+
+MILESTONE B (Whimsical 3D) — STARTED:
+- Warmer cottage wall/roof palette
+- Flower boxes on house fronts when detail is on
+- Existing walls/rooms/Build Mode untouched
+- Full browser/iPad screenshots and enterable kitchen still pending (requires running Codespace + WebGL)
+
+No production deploy. All citizens and data preserved.
+

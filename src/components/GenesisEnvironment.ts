@@ -53,8 +53,15 @@ export function buildArchitecture(
     house = h === "house",
     hash = [...b.id].reduce((n, c) => n + c.charCodeAt(0), 0),
     height = house ? (hash % 3 === 0 ? 4.9 : 3.2) : h === "archive" ? 4.1 : 3.7;
-  const wall = ["#d8cbb8", "#ccd3c6", "#d8c4ad", "#c8d0d4"][hash % 4],
-    roofColor = ["#66584e", "#705b50", "#59666a", "#7b6255"][hash % 4];
+  const wall = ["#e8d5c4", "#d4e0d0", "#f0d6c8", "#d8e4e8"][hash % 4],
+    roofColor = ["#8b6b5a", "#7a5c4e", "#6a7a7e", "#8a6a5a"][hash % 4];
+  // Whimsical cottagecore touch: soft flower boxes on houses
+  if (house && t.detail) {
+    box(g, 1.2, 0.25, 0.4, "#c97b6a", -1.4, 1.1, 2.1);
+    box(g, 1.2, 0.25, 0.4, "#c97b6a", 1.4, 1.1, 2.1);
+    mesh(g, geo("flowers", () => new T.SphereGeometry(0.18, 6, 4)), "#f4a6c2", -1.4, 1.4, 2.1);
+    mesh(g, geo("flowers", () => new T.SphereGeometry(0.18, 6, 4)), "#f4a6c2", 1.4, 1.4, 2.1);
+  }
   if (h === "gardens") {
     for (const x of [-2.3, 2.3])
       for (const z of [-1.8, 1.8]) {
