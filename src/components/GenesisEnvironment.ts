@@ -55,12 +55,24 @@ export function buildArchitecture(
     height = house ? (hash % 3 === 0 ? 4.9 : 3.2) : h === "archive" ? 4.1 : 3.7;
   const wall = ["#e8d5c4", "#d4e0d0", "#f0d6c8", "#d8e4e8"][hash % 4],
     roofColor = ["#8b6b5a", "#7a5c4e", "#6a7a7e", "#8a6a5a"][hash % 4];
-  // Whimsical cottagecore touch: soft flower boxes on houses
+  // Whimsical Tiny-Glade / cottagecore vibe
   if (house && t.detail) {
+    // Flower boxes
     box(g, 1.2, 0.25, 0.4, "#c97b6a", -1.4, 1.1, 2.1);
     box(g, 1.2, 0.25, 0.4, "#c97b6a", 1.4, 1.1, 2.1);
     mesh(g, geo("flowers", () => new T.SphereGeometry(0.18, 6, 4)), "#f4a6c2", -1.4, 1.4, 2.1);
     mesh(g, geo("flowers", () => new T.SphereGeometry(0.18, 6, 4)), "#f4a6c2", 1.4, 1.4, 2.1);
+    mesh(g, geo("flowers2", () => new T.SphereGeometry(0.15, 5, 3)), "#ffd166", -1.1, 1.45, 2.05);
+    mesh(g, geo("flowers2", () => new T.SphereGeometry(0.15, 5, 3)), "#ffd166", 1.1, 1.45, 2.05);
+    // Soft ivy along the wall
+    for (let i = 0; i < 5; i++) {
+      mesh(g, geo("ivy", () => new T.SphereGeometry(0.12, 4, 3)), "#5a8a5a", -2.1 + i * 0.9, 0.6 + (i % 2) * 0.4, 2.05);
+    }
+    // Warm window glow hint
+    box(g, 0.7, 0.9, 0.05, "#ffe8b0", -1.2, 1.8, 2.12);
+    box(g, 0.7, 0.9, 0.05, "#ffe8b0", 1.2, 1.8, 2.12);
+    // Small porch lantern
+    mesh(g, geo("lantern", () => new T.SphereGeometry(0.12, 6, 4)), "#fff3c4", 0, 1.6, 2.3);
   }
   if (h === "gardens") {
     for (const x of [-2.3, 2.3])

@@ -323,3 +323,14 @@ MILESTONE B (Whimsical 3D) — STARTED:
 
 No production deploy. All citizens and data preserved.
 
+
+## Visual direction update — November 17, 2026
+User shared Tiny Glade / cozy dollhouse style references (flower-covered cottages, lush gardens, warm cutaway interiors).
+
+Applied incremental cottagecore pass on houses:
+- Flower boxes + extra blooms
+- Soft ivy
+- Warm window glow
+- Porch lantern
+Existing build systems and citizen data unchanged. Full enterable cutaway kitchens and broader landscaping still future work.
+
