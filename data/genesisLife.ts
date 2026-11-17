@@ -39,6 +39,11 @@ export type LifePerson = {
   goal: string;
   initialFaction: string;
   beliefs: Record<string, number>;
+  // Additive cooking progression (migration-safe)
+  cookingSkill?: number;
+  knownRecipes?: string[];
+  favoriteFoods?: string[];
+  dislikedIngredients?: string[];
 };
 export type Building = {
   id: string;
@@ -75,7 +80,7 @@ export type LifeState = {
   shortageUntil: number;
   lightUntil: number;
   // Additive household food inventory (servings). Keyed by household id. Optional for migration safety.
-  foodInventory?: Record<string, number>;
+  foodInventory?: Record<string, any>;
   // Additive single grocery store for the food-economy milestone. Migration-safe.
   grocery?: {
     id: string;
@@ -130,17 +135,35 @@ export function householdKey(personId: number, s: LivingState): string {
   return s.life.people[personId]?.home || "home-0";
 }
 export function getHouseholdFood(s: LivingState, household: string): number {
-  return s.life.foodInventory?.[household] ?? 0;
+  const v = s.life.foodInventory?.[household];
+  if (typeof v === "number") return v;
+  if (v && typeof v === "object") return (v["basic-servings"] ?? 0) + Object.entries(v).filter(([k]) => k.startsWith("meal-")).reduce((a, [, n]) => a + (Number(n) || 0), 0);
+  return 0;
 }
 export function addHouseholdFood(s: LivingState, household: string, amount: number): void {
   if (!s.life.foodInventory) s.life.foodInventory = {};
-  s.life.foodInventory[household] = Math.max(0, (s.life.foodInventory[household] ?? 0) + amount);
+  const cur = s.life.foodInventory[household];
+  if (typeof cur === "number" || cur == null) {
+    s.life.foodInventory[household] = Math.max(0, (cur ?? 0) + amount);
+  } else {
+    cur["basic-servings"] = Math.max(0, (cur["basic-servings"] ?? 0) + amount);
+  }
 }
 export function consumeHouseholdFood(s: LivingState, household: string, amount: number): boolean {
   const have = getHouseholdFood(s, household);
   if (have < amount) return false;
   addHouseholdFood(s, household, -amount);
   return true;
+}
+export function addIngredient(s: LivingState, household: string, item: string, qty: number): void {
+  if (!s.life.foodInventory) s.life.foodInventory = {};
+  let inv = s.life.foodInventory[household];
+  if (typeof inv !== "object" || inv == null) {
+    const old = typeof inv === "number" ? inv : 0;
+    inv = { "basic-servings": old };
+    s.life.foodInventory[household] = inv;
+  }
+  (inv as any)[item] = ((inv as any)[item] ?? 0) + qty;
 }
 
 // Grocery store operations (additive, uses existing ledger + supplies)
@@ -376,6 +399,117 @@ function move(s: LivingState, id: number, location: string, offset = 0) {
 export function emptyResult(s: LivingState): LifeResult {
   return { state: s, events: [], transactions: [], messages: [] };
 }
+// Real ingredients and recipes (additive; basic-servings remains compatible)
+export const INGREDIENTS = {
+  eggs: { price: 80, name: "Eggs" },
+  bread: { price: 120, name: "Bread" },
+  tomatoes: { price: 100, name: "Tomatoes" },
+  pasta: { price: 150, name: "Pasta" },
+  chicken: { price: 300, name: "Chicken" },
+  rice: { price: 100, name: "Rice" },
+  carrots: { price: 70, name: "Carrots" },
+  onions: { price: 60, name: "Onions" },
+  milk: { price: 90, name: "Milk" },
+  flour: { price: 110, name: "Flour" },
+} as const;
+
+export const RECIPES = [
+  {
+    id: "scrambled-eggs-toast",
+    name: "Scrambled Eggs and Toast",
+    ingredients: { eggs: 2, bread: 1 },
+    portions: 2,
+    difficulty: 1,
+    time: 10,
+  },
+  {
+    id: "tomato-pasta",
+    name: "Tomato Pasta",
+    ingredients: { pasta: 1, tomatoes: 2, onions: 1 },
+    portions: 3,
+    difficulty: 2,
+    time: 20,
+  },
+  {
+    id: "chicken-rice",
+    name: "Chicken and Rice",
+    ingredients: { chicken: 1, rice: 1, onions: 1 },
+    portions: 4,
+    difficulty: 2,
+    time: 30,
+  },
+  {
+    id: "vegetable-soup",
+    name: "Vegetable Soup",
+    ingredients: { carrots: 2, onions: 1, tomatoes: 1 },
+    portions: 3,
+    difficulty: 1,
+    time: 25,
+  },
+  {
+    id: "pancakes",
+    name: "Pancakes",
+    ingredients: { flour: 1, milk: 1, eggs: 1 },
+    portions: 3,
+    difficulty: 2,
+    time: 15,
+  },
+] as const;
+
+export function ensureCooking(person: LifePerson) {
+  if (person.cookingSkill == null) person.cookingSkill = 10 + (person.skill % 20);
+  if (!person.knownRecipes) person.knownRecipes = ["scrambled-eggs-toast", "vegetable-soup"];
+  if (!person.favoriteFoods) person.favoriteFoods = ["scrambled-eggs-toast"];
+  if (!person.dislikedIngredients) person.dislikedIngredients = [];
+}
+
+export function householdHasIngredients(s: LivingState, household: string, needed: Record<string, number>): boolean {
+  const inv = s.life.foodInventory?.[household] ?? {};
+  // foodInventory currently number; extend support for object form
+  if (typeof inv === "number") return false;
+  for (const [k, q] of Object.entries(needed)) {
+    if (((inv as any)[k] ?? 0) < q) return false;
+  }
+  return true;
+}
+
+export function deductIngredients(s: LivingState, household: string, needed: Record<string, number>): boolean {
+  if (!householdHasIngredients(s, household, needed)) return false;
+  const inv = s.life.foodInventory![household] as any;
+  for (const [k, q] of Object.entries(needed)) inv[k] = (inv[k] ?? 0) - q;
+  return true;
+}
+
+export function cookRecipe(
+  s: LivingState,
+  citizenId: number,
+  recipeId: string,
+): { ok: boolean; reason: string; portions?: number; mealId?: string } {
+  const person = s.life.people[citizenId];
+  if (!person) return { ok: false, reason: "no person" };
+  ensureCooking(person);
+  const recipe = RECIPES.find((r) => r.id === recipeId);
+  if (!recipe) return { ok: false, reason: "unknown recipe" };
+  if (!person.knownRecipes!.includes(recipeId) && (person.cookingSkill ?? 0) < recipe.difficulty * 15)
+    return { ok: false, reason: "skill too low" };
+  const household = householdKey(citizenId, s);
+  // Ensure inventory is object
+  if (!s.life.foodInventory) s.life.foodInventory = {};
+  if (typeof s.life.foodInventory[household] !== "object") {
+    const old = s.life.foodInventory[household] as any;
+    s.life.foodInventory[household] = { "basic-servings": typeof old === "number" ? old : 0 } as any;
+  }
+  if (!deductIngredients(s, household, recipe.ingredients as any))
+    return { ok: false, reason: "missing ingredients" };
+  const mealId = "meal-" + recipeId + "-" + Date.now();
+  const inv = s.life.foodInventory[household] as any;
+  inv[mealId] = (inv[mealId] ?? 0) + recipe.portions;
+  person.cookingSkill = Math.min(100, (person.cookingSkill ?? 10) + recipe.difficulty);
+  if (!person.knownRecipes!.includes(recipeId)) person.knownRecipes!.push(recipeId);
+  return { ok: true, reason: "cooked " + recipe.name, portions: recipe.portions, mealId };
+}
+
+
 export function advanceLiving(
   previous: GenesisState,
   options: { inquiry?: boolean } = {},
@@ -410,6 +544,7 @@ export function advanceLiving(
     );
     if (p.hunger > 85) p.health = Math.max(25, p.health - 3);
     if (researchUsed.includes(c.id) || phoneUsed.includes(c.id)) continue;
+
     // Autonomous household shopping when pantry is low (not only when already hungry)
     const household = householdKey(c.id, s);
     const pantry = getHouseholdFood(s, household);
