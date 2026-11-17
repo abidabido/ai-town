@@ -79,7 +79,8 @@ export default function GenesisWorld3D(props: Props) {
   const presenceAction = useMutation(convexApi.genesis.observerPresenceAction);
   const [walking, setWalking] = useState(false),
     [walkStatus, setWalkStatus] = useState(""),
-    [streetView, setStreetView] = useState(false);
+    [streetView, setStreetView] = useState(false),
+    [showCottageInterior, setShowCottageInterior] = useState(false);
   const landingRef = useRef(false),
     busy = useRef(false);
   const [landing, setLanding] = useState(false);
@@ -1254,6 +1255,14 @@ export default function GenesisWorld3D(props: Props) {
       <p className="world3d-status" role="status">
         {walking ? "Saving your walk…" : walkStatus}
       </p>
+      
+      <button
+        onClick={() => setShowCottageInterior((v) => !v)}
+        style={{ position: "absolute", top: 60, right: 12, zIndex: 20, padding: "8px 12px", background: "#c97b6a", color: "white", border: "none", borderRadius: 8, fontSize: 14 }}
+      >
+        {showCottageInterior ? "Hide Cottage Interior" : "Enter Cottage (Kitchen)"}
+      </button>
+
       {streetView && (
         <details>
           <summary>Step buttons (optional)</summary>

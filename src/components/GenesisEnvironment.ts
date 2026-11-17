@@ -584,3 +584,49 @@ export function buildCitizen(
   g.scale.setScalar(0.95 + (id % 4) * 0.025);
   return { body, head, hair, limbs, phone, book, bowl, longHair, pony };
 }
+
+export function buildCottageInterior(
+  t: VisualTools,
+  parent: T.Object3D,
+  offset: { x: number; y: number; z: number } = { x: 0, y: 0, z: 0 },
+) {
+  const { box, mesh, material, geo } = t;
+  const g = new T.Group();
+  g.position.set(offset.x, offset.y, offset.z);
+  g.name = "cottage-interior";
+
+  // Wooden floor
+  box(g, 8, 0.1, 6, "#c4a484", 0, 0.05, 0);
+  // Floral-ish walls (soft)
+  box(g, 8.2, 2.8, 0.15, "#f5e6d3", 0, 1.4, -3);
+  box(g, 0.15, 2.8, 6, "#f5e6d3", -4, 1.4, 0);
+  box(g, 0.15, 2.8, 6, "#f5e6d3", 4, 1.4, 0);
+
+  // Kitchen counters and appliances
+  box(g, 2.4, 0.9, 0.6, "#e8dcc8", -2.5, 0.5, -2.2); // counter
+  box(g, 0.7, 1.4, 0.6, "#d4c4a8", -3.2, 0.7, -2.2); // fridge
+  box(g, 0.8, 0.4, 0.5, "#a8c5b0", -1.6, 0.9, -2.2); // stove
+  box(g, 0.5, 0.3, 0.4, "#f0f0f0", -2.0, 1.1, -2.0); // sink
+
+  // Dining table + chairs
+  box(g, 1.6, 0.08, 1.0, "#deb887", 1.2, 0.75, 0.5);
+  box(g, 0.4, 0.7, 0.4, "#8b5a2b", 0.6, 0.35, 0.2);
+  box(g, 0.4, 0.7, 0.4, "#8b5a2b", 1.8, 0.35, 0.2);
+  box(g, 0.4, 0.7, 0.4, "#8b5a2b", 0.6, 0.35, 0.8);
+  box(g, 0.4, 0.7, 0.4, "#8b5a2b", 1.8, 0.35, 0.8);
+
+  // Warm lights
+  mesh(g, geo("lamp", () => new T.SphereGeometry(0.15, 8, 6)), "#fff3c4", 1.2, 1.8, 0.5);
+  mesh(g, geo("lamp2", () => new T.SphereGeometry(0.12, 6, 4)), "#ffe8b0", -2.2, 1.6, -2.0);
+
+  // Plants and decor
+  mesh(g, geo("plant", () => new T.SphereGeometry(0.25, 6, 4)), "#6b8e6b", -3.5, 0.4, 1.5);
+  mesh(g, geo("plant2", () => new T.SphereGeometry(0.2, 5, 3)), "#7a9a6a", 3.2, 0.35, -1.0);
+  box(g, 0.8, 1.2, 0.15, "#8b7355", 3.5, 0.7, 2.0); // bookshelf
+
+  // Rug
+  box(g, 2.2, 0.02, 1.6, "#d4a5a5", 1.2, 0.12, 0.5);
+
+  parent.add(g);
+  return g;
+}

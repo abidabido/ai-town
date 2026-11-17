@@ -510,6 +510,29 @@ export function cookRecipe(
 }
 
 
+
+export function cookAtHome(
+  s: LivingState,
+  citizenId: number,
+  recipeId: string,
+): { ok: boolean; reason: string; mealId?: string } {
+  const person = s.life.people[citizenId];
+  if (!person) return { ok: false, reason: "no citizen" };
+  person.location = "homes";
+  person.activity = "Preparing a meal in the kitchen";
+  const result = cookRecipe(s, citizenId, recipeId);
+  if (result.ok) {
+    person.activity = "Eating at the dining table";
+    // Consume one portion if the meal exists
+    const hh = householdKey(citizenId, s);
+    const inv = s.life.foodInventory?.[hh] as any;
+    if (inv && result.mealId && inv[result.mealId] > 0) {
+      inv[result.mealId] -= 1;
+      person.hunger = Math.max(0, (person.hunger ?? 50) - 40);
+    }
+  }
+  return result;
+}
 export function advanceLiving(
   previous: GenesisState,
   options: { inquiry?: boolean } = {},
