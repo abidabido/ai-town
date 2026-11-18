@@ -1,4 +1,5 @@
 import CitizenTalk from "./CitizenTalk";
+import { FoodHouseholdPanel } from "./FoodHouseholdPanel";
 import BuildBuy from "./BuildBuy";
 import MedicalResearchLab from "./MedicalResearchLab";
 import "./MedicalResearchLab.css";
@@ -842,6 +843,7 @@ export default function Genesis() {
               </div>
               <div id="genesis-inspector">
                 {selected !== undefined ? (
+                  <FoodHouseholdPanel household={selected != null ? (current?.state.life.people[selected]?.home || "home-0") : "home-0"} />
                   <CitizenPanel
                     state={state}
                     id={selected}
